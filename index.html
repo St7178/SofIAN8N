@@ -485,7 +485,7 @@ function App() {
       }));
 
       // ── Llamada al webhook de n8n ──
-      const res = await fetch(`${API_BASE}/webhook/api/chat`, {
+      const res = await fetch(`${API_BASE}/webhook-test/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: apiMessage, history }),
