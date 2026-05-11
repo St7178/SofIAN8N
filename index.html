@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -276,8 +277,8 @@ const API_BASE = "https://n8ntest.istreetlab.com";
 
 const { useState, useRef, useEffect, useCallback } = React;
 
-const BOT_AVATAR = "🤖";
-const USER_AVATAR = "👤";
+const BOT_AVATAR = "🧠";
+const USER_AVATAR = "🧑‍💻";
 const STORAGE_KEY = "sofia_chats";
 
 const MODES = [
@@ -329,15 +330,21 @@ function TypingBubble() {
   );
 }
 
-function BatteryBar({ level, name, model, lastSeen, serial }) {
+function BatteryBar({ level, name, model, lastSeen, serial, online_raw, estado }) {
   const pct = level != null ? Math.min(100, Math.max(0, level)) : 0;
   const color = pct >= 60 ? "#bbd531" : pct >= 30 ? "#f59e0b" : "#ef4444";
   const icon = pct >= 80 ? "🔋" : pct >= 50 ? "🔌" : pct >= 20 ? "⚠️" : "🪴";
+  // online_raw puede ser 1/0 o true/false; estado puede ser 'Conectado'/'Desconectado'
+  const conectado = online_raw === 1 || online_raw === true || estado === "Conectado";
+  const estadoLabel = conectado ? "🟢 En línea" : "🔴 Desconectado";
+  // lastSeen ya viene formateado como string desde n8n — no re-parsear con new Date()
+  const fechaMostrar = lastSeen && lastSeen !== "N/D" ? lastSeen : "Desconocida";
   return (
     <div>
       <p style={{ fontWeight: 600, fontSize: "15px" }}>{icon} {name}</p>
       <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{model} · Serial: {serial}</p>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "12px" }}>
+      <p style={{ fontSize: "13px", marginTop: "6px" }}>{estadoLabel}</p>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
         <div className="battery-bar-track">
           <div className="battery-bar-fill" style={{ width: `${pct}%`, background: color }} />
         </div>
@@ -346,7 +353,7 @@ function BatteryBar({ level, name, model, lastSeen, serial }) {
         </span>
       </div>
       <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "6px" }}>
-        Última conexión: {lastSeen ? new Date(lastSeen).toLocaleString("es-MX") : "Desconocida"}
+        Última conexión: {fechaMostrar}
       </p>
     </div>
   );
@@ -355,6 +362,7 @@ function BatteryBar({ level, name, model, lastSeen, serial }) {
 function MapMessage({ lat, lng, name }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
+  const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
   useEffect(() => {
     if (!containerRef.current || typeof L === "undefined") return;
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
@@ -362,11 +370,28 @@ function MapMessage({ lat, lng, name }) {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap",
     }).addTo(map);
-    L.marker([lat, lng]).addTo(map).bindPopup(`<b>${name}</b>`).openPopup();
+    const marker = L.marker([lat, lng]).addTo(map);
+    marker.bindPopup(`<b>${name}</b><br><a href="${googleMapsUrl}" target="_blank" style="color:#4285F4;">Abrir en Google Maps</a>`).openPopup();
     mapRef.current = map;
     return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
   }, [lat, lng, name]);
-  return <div ref={containerRef} className="map-container" />;
+  return (
+    <div>
+      <div ref={containerRef} className="map-container" />
+      <a
+        href={googleMapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "inline-block", marginTop: "8px", padding: "6px 14px",
+          background: "#4285F4", color: "#fff", borderRadius: "6px",
+          textDecoration: "none", fontSize: "12px"
+        }}
+      >
+        🗺️ Abrir en Google Maps
+      </a>
+    </div>
+  );
 }
 
 function MessageBubble({ msg }) {
@@ -377,10 +402,19 @@ function MessageBubble({ msg }) {
         {isUser ? USER_AVATAR : BOT_AVATAR}
       </div>
       <div className={`bubble ${isUser ? "user-bubble" : "bot-bubble"}`}>
-        {msg.battery
-          ? <BatteryBar {...msg.battery} />
-          : <div dangerouslySetInnerHTML={{ __html: msg.html || escapeHtml(msg.content) }} />
-        }
+        {/* Siempre renderiza el HTML con la ficha completa si existe */}
+        {(msg.html) && (
+          <div dangerouslySetInnerHTML={{ __html: msg.html }} />
+        )}
+        {/* Si no hay html, muestra texto plano */}
+        {!msg.html && !msg.battery && (
+          <div dangerouslySetInnerHTML={{ __html: escapeHtml(msg.content) }} />
+        )}
+        {/* Barra de batería solo como complemento visual si viene battery Y no hay html */}
+        {msg.battery && !msg.html && (
+          <BatteryBar {...msg.battery} />
+        )}
+        {/* Mapa Leaflet debajo del contenido */}
         {msg.map && <MapMessage {...msg.map} />}
         <div className="bubble-time">{formatTime(msg.time)}</div>
       </div>
@@ -488,7 +522,7 @@ function App() {
       const res = await fetch(`${API_BASE}/webhook-test/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: apiMessage, history }),
+        body: JSON.stringify({ message: apiMessage, history, mode }),
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -557,7 +591,7 @@ function App() {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <div className="logo-icon">
-            <img src="/Logo.png" alt="SofIA" style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"10px"}} />
+            <img src="https://grupocnet.com.co/wp-content/uploads/2021/08/logocolor.png" alt="SofIA" style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"10px"}} />
           </div>
           <div className="logo-text">Sof<span>IA</span></div>
         </div>
@@ -601,7 +635,7 @@ function App() {
           {isEmpty ? (
             <div className="welcome">
               <div className="welcome-icon">
-                <img src="/Logo.png" alt="SofIA" style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"20px"}} />
+                <img src="https://th.bing.com/th/id/OIP.2j7fyal32zIJfnngWk45jAHaFH?w=222&h=185&c=7&r=0&o=7&dpr=1.5&pid=1.7&rm=3" alt="SofIA" style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"20px"}} />
               </div>
               <h2>Hola, ¿en qué puedo ayudarte?</h2>
               <p>Soy tu asistente para consultar la base de datos GPS. Puedes preguntarme sobre dispositivos, ubicaciones y más.</p>
