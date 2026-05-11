@@ -250,6 +250,15 @@
     .map-container { height: 200px; border-radius: 10px; margin-top: 10px; overflow: hidden; }
     .leaflet-container { font-family: inherit !important; font-size: 13px !important; }
 
+    .csv-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 10px; padding: 6px 14px;
+      background: rgba(187,213,49,.12); border: 1px solid rgba(187,213,49,.35);
+      color: var(--accent); border-radius: 8px; cursor: pointer;
+      font-size: 12px; font-weight: 600; transition: all .15s;
+    }
+    .csv-btn:hover { background: rgba(187,213,49,.22); border-color: var(--accent); }
+
     @media (max-width: 640px) {
       .sidebar { display: none; }
       .messages-area { padding: 16px; }
@@ -384,8 +393,60 @@ function MapMessage({ lat, lng, name }) {
   );
 }
 
+function downloadCSV(html, filename) {
+  // Extrae la tabla del HTML y la convierte a CSV
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const tables = doc.querySelectorAll("table");
+  if (!tables.length) return;
+
+  let csvContent = "\uFEFF"; // BOM para que Excel reconozca UTF-8
+
+  tables.forEach((table, tIdx) => {
+    // Busca el encabezado del bloque (th colspan) como título de sección
+    const titulo = table.querySelector("th[colspan]");
+    if (titulo) {
+      const tituloTexto = titulo.innerText || titulo.textContent || "";
+      csvContent += `"${tituloTexto.replace(/"/g, '""').trim()}"\n`;
+    }
+
+    const rows = table.querySelectorAll("tr");
+    rows.forEach(row => {
+      const cells = row.querySelectorAll("th, td");
+      // Saltar filas de tips (💡)
+      const rowText = row.textContent || "";
+      if (rowText.includes("💡")) return;
+      // Saltar filas de encabezado de bloque (th con colspan)
+      if (row.querySelector("th[colspan]")) return;
+
+      const values = Array.from(cells).map(cell => {
+        const text = (cell.innerText || cell.textContent || "").trim()
+          .replace(/\n/g, " ").replace(/"/g, '""');
+        return `"${text}"`;
+      });
+      if (values.length) csvContent += values.join(",") + "\n";
+    });
+
+    if (tIdx < tables.length - 1) csvContent += "\n";
+  });
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = filename || "resultado.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function MessageBubble({ msg }) {
   const isUser = msg.role === "user";
+  // Detecta si el HTML tiene al menos una tabla para mostrar botón CSV
+  const tieneTabla = msg.html && msg.html.includes("<table");
+  const nombreArchivo = `SOTI_${new Date().toISOString().slice(0,10)}.csv`;
+
   return (
     <div className={`msg-row ${isUser ? "user" : ""}`}>
       <div className={`msg-avatar ${isUser ? "user-av" : "bot-av"}`}>
@@ -406,6 +467,18 @@ function MessageBubble({ msg }) {
         )}
         {/* Mapa Leaflet debajo del contenido */}
         {msg.map && <MapMessage {...msg.map} />}
+        {/* Botón CSV — solo si hay tabla en la respuesta */}
+        {tieneTabla && (
+          <div style={{ marginTop: "8px" }}>
+            <button
+              className="csv-btn"
+              onClick={() => downloadCSV(msg.html, nombreArchivo)}
+              title="Descargar resultado como CSV"
+            >
+              ⬇️ Descargar CSV
+            </button>
+          </div>
+        )}
         <div className="bubble-time">{formatTime(msg.time)}</div>
       </div>
     </div>
