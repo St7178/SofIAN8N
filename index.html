@@ -405,6 +405,7 @@ function MapMessage({ lat, lng, name, history }) {
   const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
 
   useEffect(() => {
+    useEffect(() => {   window.__refreshDashboard = () => {     sendMessage('dashboard');   };   return () => { delete window.__refreshDashboard; }; }, [sendMessage]);
     if (!containerRef.current || typeof L === "undefined") return;
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
 
