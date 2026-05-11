@@ -412,9 +412,7 @@ function MapMessage({ lat, lng, name, history }) {
 
     // Centra el mapa en el punto más reciente
     const map = L.map(containerRef.current, { zoomControl: true }).setView([puntos[0].lat, puntos[0].lng], 15);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
-    }).addTo(map);
+    L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {   attribution: "© Google Maps",   maxZoom: 20 }).addTo(map);
 
     // Dibuja línea de recorrido si hay múltiples puntos
     if (puntos.length > 1) {
