@@ -358,107 +358,26 @@ function BatteryBar({ level, name, model, lastSeen, serial, online_raw, estado }
   );
 }
 
-function MapMessage({ lat, lng, name, history }) {
-  const containerRef = useRef(null);
-  const mapRef       = useRef(null);
-  const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
- 
-  useEffect(() => {
-    if (!containerRef.current || typeof L === "undefined") return;
-    if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
- 
-    const puntos = history && history.length > 0 ? history : [{ lat, lng, fecha: "", num: 1 }];
- 
-    // Centra el mapa en el punto más reciente
-    const map = L.map(containerRef.current, { zoomControl: true }).setView([puntos[0].lat, puntos[0].lng], 15);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
-    }).addTo(map);
- 
-    // Dibuja línea de recorrido si hay múltiples puntos
-    if (puntos.length > 1) {
-      const latlngs = puntos.map(p => [p.lat, p.lng]);
-      L.polyline(latlngs, { color: "#bbd531", weight: 2, opacity: 0.6, dashArray: "5,5" }).addTo(map);
-    }
- 
-    // Íconos personalizados
-    const iconoUltimo = L.divIcon({
-      className: "",
-      html: `<div style="background:#bbd531;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(187,213,49,.8);"></div>`,
-      iconSize: [14, 14], iconAnchor: [7, 7]
-    });
-    const iconoNormal = L.divIcon({
-      className: "",
-      html: `<div style="background:#4f8ef7;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:0.8;"></div>`,
-      iconSize: [9, 9], iconAnchor: [4, 4]
-    });
- 
-    // Agrega marcadores
-    puntos.forEach((p, idx) => {
-      const esUltimo = idx === 0;
-      const marker = L.marker([p.lat, p.lng], { icon: esUltimo ? iconoUltimo : iconoNormal }).addTo(map);
-      marker.bindPopup(`
-<b>${esUltimo ? '🟢 Último punto' : `Punto ${p.num}`}</b><br>
-        📅 ${p.fecha}<br>
-        📍 ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}<br>
-<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" style="color:#4285F4;">Ver en Google Maps</a>
-      `);
-      if (esUltimo) marker.openPopup();
-    });
- 
-    // Ajusta zoom para ver todos los puntos
-    if (puntos.length > 1) {
-      const bounds = L.latLngBounds(puntos.map(p => [p.lat, p.lng]));
-      map.fitBounds(bounds, { padding: [30, 30] });
-    }
- 
-    mapRef.current = map;
-    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
-  }, [lat, lng, name, history]);
- 
-  return (
-<div>
-<div ref={containerRef} className="map-container" style={{ height: "300px" }} />
-        href={googleMapsUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          display: "inline-block", marginTop: "8px", padding: "6px 14px",
-          background: "#4285F4", color: "#fff", borderRadius: "6px",
-          textDecoration: "none", fontSize: "12px"
-        }}
->
-        🗺️ Abrir último punto en Google Maps
-</a>
-</div>
-  );
-}
 function downloadCSV(html, filename) {
-  // Extrae la tabla del HTML y la convierte a CSV
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
   const tables = doc.querySelectorAll("table");
   if (!tables.length) return;
 
-  let csvContent = "\uFEFF"; // BOM para que Excel reconozca UTF-8
+  let csvContent = "\uFEFF";
 
   tables.forEach((table, tIdx) => {
-    // Busca el encabezado del bloque (th colspan) como título de sección
     const titulo = table.querySelector("th[colspan]");
     if (titulo) {
       const tituloTexto = titulo.innerText || titulo.textContent || "";
       csvContent += `"${tituloTexto.replace(/"/g, '""').trim()}"\n`;
     }
-
     const rows = table.querySelectorAll("tr");
     rows.forEach(row => {
-      const cells = row.querySelectorAll("th, td");
-      // Saltar filas de tips (💡)
       const rowText = row.textContent || "";
       if (rowText.includes("💡")) return;
-      // Saltar filas de encabezado de bloque (th con colspan)
       if (row.querySelector("th[colspan]")) return;
-
+      const cells = row.querySelectorAll("th, td");
       const values = Array.from(cells).map(cell => {
         const text = (cell.innerText || cell.textContent || "").trim()
           .replace(/\n/g, " ").replace(/"/g, '""');
@@ -466,7 +385,6 @@ function downloadCSV(html, filename) {
       });
       if (values.length) csvContent += values.join(",") + "\n";
     });
-
     if (tIdx < tables.length - 1) csvContent += "\n";
   });
 
@@ -481,9 +399,85 @@ function downloadCSV(html, filename) {
   URL.revokeObjectURL(url);
 }
 
+function MapMessage({ lat, lng, name, history }) {
+  const containerRef = useRef(null);
+  const mapRef       = useRef(null);
+  const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+  useEffect(() => {
+    if (!containerRef.current || typeof L === "undefined") return;
+    if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+
+    const puntos = history && history.length > 0 ? history : [{ lat, lng, fecha: "", num: 1 }];
+
+    // Centra el mapa en el punto más reciente
+    const map = L.map(containerRef.current, { zoomControl: true }).setView([puntos[0].lat, puntos[0].lng], 15);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap",
+    }).addTo(map);
+
+    // Dibuja línea de recorrido si hay múltiples puntos
+    if (puntos.length > 1) {
+      const latlngs = puntos.map(p => [p.lat, p.lng]);
+      L.polyline(latlngs, { color: "#bbd531", weight: 2, opacity: 0.6, dashArray: "5,5" }).addTo(map);
+    }
+
+    // Íconos personalizados
+    const iconoUltimo = L.divIcon({
+      className: "",
+      html: `<div style="background:#bbd531;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(187,213,49,.8);"></div>`,
+      iconSize: [14, 14], iconAnchor: [7, 7]
+    });
+    const iconoNormal = L.divIcon({
+      className: "",
+      html: `<div style="background:#4f8ef7;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:0.8;"></div>`,
+      iconSize: [9, 9], iconAnchor: [4, 4]
+    });
+
+    // Agrega marcadores
+    puntos.forEach((p, idx) => {
+      const esUltimo = idx === 0;
+      const marker = L.marker([p.lat, p.lng], { icon: esUltimo ? iconoUltimo : iconoNormal }).addTo(map);
+      marker.bindPopup(`
+        <b>${esUltimo ? "🟢 Último punto" : "Punto " + p.num}</b><br>
+        📅 ${p.fecha}<br>
+        📍 ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}<br>
+        <a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" style="color:#4285F4;">Ver en Google Maps</a>
+      `);
+      if (esUltimo) marker.openPopup();
+    });
+
+    // Ajusta zoom para ver todos los puntos
+    if (puntos.length > 1) {
+      const bounds = L.latLngBounds(puntos.map(p => [p.lat, p.lng]));
+      map.fitBounds(bounds, { padding: [30, 30] });
+    }
+
+    mapRef.current = map;
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
+  }, [lat, lng, name, history]);
+
+  return (
+    <div>
+      <div ref={containerRef} className="map-container" style={{ height: "300px" }} />
+      <a
+        href={googleMapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "inline-block", marginTop: "8px", padding: "6px 14px",
+          background: "#4285F4", color: "#fff", borderRadius: "6px",
+          textDecoration: "none", fontSize: "12px"
+        }}
+      >
+        🗺️ Abrir último punto en Google Maps
+      </a>
+    </div>
+  );
+}
+
 function MessageBubble({ msg }) {
   const isUser = msg.role === "user";
-  // Detecta si el HTML tiene al menos una tabla para mostrar botón CSV
   const tieneTabla = msg.html && msg.html.includes("<table");
   const nombreArchivo = `SOTI_${new Date().toISOString().slice(0,10)}.csv`;
 
@@ -493,21 +487,16 @@ function MessageBubble({ msg }) {
         {isUser ? USER_AVATAR : BOT_AVATAR}
       </div>
       <div className={`bubble ${isUser ? "user-bubble" : "bot-bubble"}`}>
-        {/* Siempre renderiza el HTML con la ficha completa si existe */}
         {(msg.html) && (
           <div dangerouslySetInnerHTML={{ __html: msg.html }} />
         )}
-        {/* Si no hay html, muestra texto plano */}
         {!msg.html && !msg.battery && (
           <div dangerouslySetInnerHTML={{ __html: escapeHtml(msg.content) }} />
         )}
-        {/* Barra de batería solo como complemento visual si viene battery Y no hay html */}
         {msg.battery && !msg.html && (
           <BatteryBar {...msg.battery} />
         )}
-        {/* Mapa Leaflet debajo del contenido */}
         {msg.map && <MapMessage {...msg.map} />}
-        {/* Botón CSV — solo si hay tabla en la respuesta */}
         {tieneTabla && (
           <div style={{ marginTop: "8px" }}>
             <button
