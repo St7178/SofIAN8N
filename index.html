@@ -124,7 +124,7 @@
     /* MODAL */
     .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    .modal-box{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;width:92vw;max-width:960px;height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.6);animation:slideUp .25s ease;overflow:hidden;}
+    .modal-box{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;width:92vw;max-width:960px;height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:slideUp .25s ease;overflow:hidden;}
     @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
     .modal-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;height:64px;}
     .modal-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -227,11 +227,9 @@
 
 // ─── CONFIG ───────────────────────────────────────────────────────────
 const API_BASE        = "https://n8ntest.istreetlab.com";
-// Análisis IA: se delega al webhook /api/informe de n8n (sin API key en cliente)
 const EMPRESA         = "COMPUNET";
 
 // ── Tabla de usuarios ─────────────────────────────────────────────────
-// Cada entrada es un usuario con su contraseña y config de cliente SOTI
 const USUARIOS = [
   {
     usuario:    "nutresa",
@@ -274,7 +272,19 @@ const USUARIOS = [
   },
 ];
 
-// CLIENTE_CONFIG se carga tras el login — no se define aquí de forma fija
+// ─── LOGOS POR CLIENTE ────────────────────────────────────────────────
+// Reemplaza cada URL con el logo correspondiente a cada cliente.
+// La key es el campo "usuario" en minúsculas.
+const LOGOS_CLIENTE = {
+  "nutresa":   "https://download.logo.wine/logo/Grupo_Nutresa/Grupo_Nutresa-Logo.wine.png",   // 👈 reemplaza con logo Nutresa
+  "uma":       "https://images.rappi.com/soy-rappi-api-co/Logo_grupo_uma_sin_fondo_92af1111a9.jpg",   // 👈 reemplaza con logo UMA
+  "contegral": "https://colganados.com/wp-content/uploads/contegral.png",   // 👈 reemplaza con logo Contegral
+};
+// Devuelve el logo del cliente activo, o el logo genérico de SofIA como fallback
+const getLogoCliente = (usuario) =>
+  LOGOS_CLIENTE[(usuario || "").toLowerCase()] ||
+  "https://b2kmnbrlfbl9jvgp.public.blob.vercel-storage.com/sofIAlogo.jpg";
+
 let CLIENTE_CONFIG = null;
 const STORAGE_SESSION = "sofia_session";
 
@@ -308,27 +318,19 @@ const escapeHtml = t => String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").rep
 
 
 // ─── DETECCIÓN DE TIPO DE MENSAJE ─────────────────────────────────────
-// Devuelve: "dispositivo" | "flota" | "ninguno"
 function detectarTipoInforme(msg) {
   if (!msg || msg.role !== "bot") return "ninguno";
-
-  // Informe de dispositivo: tiene datos de mapa O tiene ficha de serial (detalle)
-  // Señales: .map existe, o html contiene "Serial:" y "Modelo:" y "Estado:" (ficha individual)
   if (msg.map) return "dispositivo";
   if (msg.html) {
     const h = msg.html;
-    // Ficha individual: contiene bloque de detalle con serial+estado
     const esDetalle = h.includes("Serial:") && h.includes("Estado:") && h.includes("Batería:") && !h.includes("<tr><td>#</td>");
     if (esDetalle) return "dispositivo";
-    // Informe de flota: tiene tabla con múltiples filas
     if (h.includes("<table")) return "flota";
   }
   return "ninguno";
 }
 
 // ─── PARSER DE MÉTRICAS (FLOTA) ───────────────────────────────────────
-// Prioridad 1: informe_data del backend (datos exactos, cero parseo)
-// Prioridad 2: fallback regex sobre HTML (compatibilidad retroactiva)
 function parsearMetricasFlota(html, informeData) {
   if (informeData && informeData.tipo === 'flota' && informeData.kpis) {
     return {
@@ -340,7 +342,6 @@ function parsearMetricasFlota(html, informeData) {
       textoPlano: ""
     };
   }
-  // Fallback
   const parser = new DOMParser();
   const doc = parser.parseFromString(html || "","text/html");
   const texto = doc.body.innerText || doc.body.textContent || "";
@@ -368,7 +369,6 @@ function generarSvgBarrasModelos(modelosArr, titulo) {
   const chartW = 520;
   const padT   = 36;
   const padB   = 20;
-  // Extra espacio derecho para etiquetas externas + %
   const extraR = 100;
   const svgW   = labelW + chartW + extraR;
   const svgH   = padT + items.length * (barH + gap) + padB;
@@ -379,9 +379,7 @@ function generarSvgBarrasModelos(modelosArr, titulo) {
   const C_ON2 = "#16a34a";
   const C_OFF2= "#b91c1c";
 
-  // Umbral mínimo en píxeles para mostrar etiqueta DENTRO de la barra
   const MIN_INSIDE = 36;
-  // Umbral mínimo para dibujar la barra (evita rectángulos de 0px)
   const MIN_BAR = 4;
 
   let defs = "";
@@ -394,9 +392,8 @@ function generarSvgBarrasModelos(modelosArr, titulo) {
     const wOff   = wTotal - wOn;
     const x0     = labelW;
     const pct    = m.total > 0 ? Math.round((m.on / m.total) * 100) : 0;
-    const cy     = y + barH / 2 + 4.5; // centro vertical del texto
+    const cy     = y + barH / 2 + 4.5;
 
-    // ── Gradientes (en <defs> agrupados al inicio) ──────────────────
     defs += `
       <linearGradient id="g_on_${i}" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0%" stop-color="${C_ON2}"/>
@@ -407,55 +404,42 @@ function generarSvgBarrasModelos(modelosArr, titulo) {
         <stop offset="100%" stop-color="${C_OFF}"/>
       </linearGradient>`;
 
-    // ── Fondo track ─────────────────────────────────────────────────
     bars += `<rect x="${x0}" y="${y}" width="${chartW}" height="${barH}" rx="6" fill="#f1f5f9"/>`;
 
-    // ── Segmento ON ─────────────────────────────────────────────────
     if (wOn >= MIN_BAR) {
-      // Esquinas: izquierda redondeada siempre; derecha redondeada solo si no hay OFF
       const r = 6;
       const noOff = wOff < MIN_BAR;
       if (noOff) {
-        // Barra completa con todos los bordes redondeados
         bars += `<rect x="${x0}" y="${y}" width="${wOn}" height="${barH}" rx="${r}" fill="url(#g_on_${i})"/>`;
       } else {
-        // Solo esquinas izquierdas redondeadas
         const x2 = x0 + wOn, y2 = y + barH;
         bars += `<path d="M${x0+r},${y} H${x2} V${y2} H${x0+r} Q${x0},${y2} ${x0},${y2-r} V${y+r} Q${x0},${y} ${x0+r},${y} Z" fill="url(#g_on_${i})"/>`;
       }
-      // Etiqueta ON: dentro si cabe, fuera (arriba) si no
       if (wOn >= MIN_INSIDE) {
         bars += `<text x="${x0 + wOn/2}" y="${cy}" text-anchor="middle" fill="white" font-size="11" font-weight="700" font-family="Inter,sans-serif">${m.on}</text>`;
       } else {
-        // Etiqueta pequeña encima del segmento
         bars += `<text x="${x0 + wOn/2}" y="${y - 4}" text-anchor="middle" fill="${C_ON2}" font-size="10" font-weight="700" font-family="Inter,sans-serif">${m.on}</text>`;
       }
     }
 
-    // ── Segmento OFF ─────────────────────────────────────────────────
     if (wOff >= MIN_BAR) {
       const xOff = x0 + wOn;
       const r = 6;
       const x2 = xOff + wOff, y2 = y + barH;
-      // Esquinas derechas redondeadas
       bars += `<path d="M${xOff},${y} H${x2-r} Q${x2},${y} ${x2},${y+r} V${y2-r} Q${x2},${y2} ${x2-r},${y2} H${xOff} Z" fill="url(#g_off_${i})"/>`;
 
       if (wOff >= MIN_INSIDE) {
-        // Etiqueta dentro
         bars += `<text x="${xOff + wOff/2}" y="${cy}" text-anchor="middle" fill="white" font-size="11" font-weight="700" font-family="Inter,sans-serif">${m.off}</text>`;
       } else {
-        // Etiqueta fuera: a la derecha del segmento OFF con línea guía
         const labelX = x2 + 6;
         bars += `<line x1="${x2}" y1="${y + barH/2}" x2="${labelX - 1}" y2="${y + barH/2}" stroke="${C_OFF}" stroke-width="1" opacity="0.5"/>`;
         bars += `<text x="${labelX}" y="${cy}" text-anchor="start" fill="${C_OFF}" font-size="10" font-weight="700" font-family="Inter,sans-serif">${m.off}</text>`;
       }
     }
 
-    // ── Label modelo izquierda ───────────────────────────────────────
     const nombre = m.nombre.length > 15 ? m.nombre.slice(0, 14) + "…" : m.nombre;
     bars += `<text x="${labelW - 8}" y="${cy}" text-anchor="end" fill="#374151" font-size="12" font-weight="600" font-family="Inter,sans-serif">${nombre}</text>`;
 
-    // ── % conectividad derecha ───────────────────────────────────────
     const pctColor = pct >= 70 ? C_ON : pct >= 40 ? "#f59e0b" : C_OFF;
     bars += `<text x="${x0 + chartW + 10}" y="${cy}" fill="${pctColor}" font-size="11" font-weight="700" font-family="Inter,sans-serif">${pct}%</text>`;
   });
@@ -483,8 +467,6 @@ function generarSvgBarrasModelos(modelosArr, titulo) {
 }
 
 // ─── PARSER DE DATOS DE DISPOSITIVO ──────────────────────────────────
-// Prioridad 1: informe_data del backend (datos exactos, cero parseo)
-// Prioridad 2: fallback msg.battery + msg.map + HTML
 function parsearDatosDispositivo(msg) {
   if (msg.informe_data && msg.informe_data.tipo === 'dispositivo' && msg.informe_data.dispositivo) {
     const d = msg.informe_data.dispositivo;
@@ -499,12 +481,12 @@ function parsearDatosDispositivo(msg) {
       ultimaConex: d.ultimaConex || "N/D",
       lat:         d.lat,
       lng:         d.lng,
-      puntosGPS:   msg.informe_data.puntosGPS  || [],
-      puntosBat:   msg.informe_data.puntosBat  || [],
-      puntosRed:   msg.informe_data.puntosRed  || []
+      puntosGPS:      msg.informe_data.puntosGPS      || [],
+      puntosBat:      msg.informe_data.puntosBat      || [],
+      puntosRed:      msg.informe_data.puntosRed      || [],
+      puntosTrafico:  msg.informe_data.puntosTrafico  || []
     };
   }
-  // Fallback
   const bat = msg.battery || {};
   const parser = new DOMParser();
   const doc = msg.html ? parser.parseFromString(msg.html,"text/html") : null;
@@ -528,14 +510,13 @@ function parsearDatosDispositivo(msg) {
     lat:         msg.map?.lat || null,
     lng:         msg.map?.lng || null,
     puntosGPS,
-    puntosBat:   [],
-    puntosRed:   []
+    puntosBat:      [],
+    puntosRed:      [],
+    puntosTrafico:  []
   };
 }
 
-// ─── ANÁLISIS IA (OPENAI) ─────────────────────────────────────────────
 // ─── ANÁLISIS IA — delega a n8n /api/informe ─────────────────────────
-// La API key de OpenAI vive en n8n. El cliente nunca la ve.
 async function generarAnalisisIA(tipo, informeData) {
   const resp = await fetch(`${API_BASE}/webhook/api/informe`, {
     method: "POST",
@@ -723,8 +704,6 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--te
 // ════════════════════════════════════════════════════════════════════
 // GENERADOR DE INFORME — DISPOSITIVO
 // ════════════════════════════════════════════════════════════════════
-// ─── GENERADOR SVG GRÁFICA DE BATERÍA EN EL TIEMPO ───────────────────
-// puntosBat: [{fecha, bateria, nivel}] — ordenados cronológicamente (más antiguo primero)
 function generarSvgBateria(puntosBat, titulo) {
   if (!puntosBat || puntosBat.length < 2) return "";
 
@@ -741,7 +720,6 @@ function generarSvgBateria(puntosBat, titulo) {
   const xScale = i => padL + (i / (n - 1)) * chartW;
   const yScale = v => padT + chartH - (Math.min(100, Math.max(0, v)) / 100) * chartH;
 
-  // Líneas de referencia
   const refs = [
     { v: 80, label: "80%", color: "#22c55e" },
     { v: 50, label: "50%", color: "#f59e0b" },
@@ -754,7 +732,6 @@ function generarSvgBateria(puntosBat, titulo) {
     refLines += `<text x="${padL-4}" y="${y+4}" text-anchor="end" fill="${r.color}" font-size="9" font-family="Inter,sans-serif" font-weight="600">${r.label}</text>`;
   });
 
-  // Línea y área
   const polyPoints = puntosBat.map((p,i) => `${xScale(i)},${yScale(p.bateria)}`).join(" ");
   const areaPath   = [
     `M${xScale(0)},${yScale(puntosBat[0].bateria)}`,
@@ -767,29 +744,24 @@ function generarSvgBateria(puntosBat, titulo) {
   const avgBat    = puntosBat.reduce((s,p) => s + p.bateria, 0) / n;
   const lineColor = avgBat >= 50 ? "#22c55e" : avgBat >= 20 ? "#f59e0b" : "#ef4444";
 
-  // Puntos
   let puntosSvg = "";
   puntosBat.forEach((p, i) => {
     const cx  = xScale(i);
     const cy  = yScale(p.bateria);
     const col = p.bateria >= 80 ? "#16a34a" : p.bateria >= 50 ? "#d97706" : p.bateria >= 20 ? "#dc2626" : "#7f1d1d";
-    // Punto
     puntosSvg += `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${col}" stroke="white" stroke-width="1.5"><title>${p.fecha}: ${p.bateria}% (${p.nivel})</title></circle>`;
-    // Etiqueta: primero, último y cada 4
     if (i === 0 || i === n-1 || i % 4 === 0) {
       const anchor = i === 0 ? "start" : i === n-1 ? "end" : "middle";
       puntosSvg += `<text x="${cx}" y="${cy-9}" text-anchor="${anchor}" fill="${col}" font-size="9" font-weight="700" font-family="Inter,sans-serif">${p.bateria}%</text>`;
     }
   });
 
-  // Etiquetas eje X: primero, cuarto, mitad, tres cuartos, último
   const xIdxs = [...new Set([0, Math.floor(n/4), Math.floor(n/2), Math.floor(3*n/4), n-1])];
   let xLabels = "";
   xIdxs.forEach(i => {
     const p     = puntosBat[i];
     if (!p) return;
     const x     = xScale(i);
-    // Mostrar solo hora y minuto
     const short = p.fecha.includes(",") ? p.fecha.split(",")[1].trim() : p.fecha;
     xLabels += `<text x="${x}" y="${svgH-6}" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter,sans-serif">${short}</text>`;
   });
@@ -822,7 +794,7 @@ function generarInformeDispositivo(datos, htmlFuente, analisis) {
   const fecha    = new Date();
   const fechaStr = fecha.toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
   const horaStr  = fecha.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
-  const { nombre, serial, modelo, fabricante, estado, bateria, negocio, ultimaConex, lat, lng, puntosGPS, puntosBat, puntosRed } = datos;
+  const { nombre, serial, modelo, fabricante, estado, bateria, negocio, ultimaConex, lat, lng, puntosGPS, puntosBat, puntosRed, puntosTrafico } = datos;
 
   const conectado = estado && estado.toLowerCase().includes("línea") || estado === "Conectado";
   const estadoColor = conectado ? "#22c55e" : "#ef4444";
@@ -837,7 +809,6 @@ function generarInformeDispositivo(datos, htmlFuente, analisis) {
     ? `<p style="line-height:1.85;color:#374151;">${analisis.replace(/\n/g,"<br><br>")}</p>`
     : `<p style="color:#9ca3af;font-style:italic;">Análisis no disponible.</p>`;
 
-  // ── Sección batería (pre-calculada antes del template) ────────────
   const seccionBateria = (() => {
     const bat = puntosBat && puntosBat.length >= 2 ? puntosBat : null;
     if (!bat) return "";
@@ -855,7 +826,6 @@ function generarInformeDispositivo(datos, htmlFuente, analisis) {
     return '<div><div class="stitle">Historial de Batería</div>' + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;overflow-x:auto;"><div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;">Evolución del nivel de batería — últimos '+n+' registros</div><svg viewBox="0 0 '+svgW+' '+svgH+'" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;min-width:320px;"><rect x="'+padL+'" y="'+padT+'" width="'+chartW+'" height="'+chartH+'" fill="white" rx="4" stroke="#f1f5f9" stroke-width="1"/>'+refLines+'<path d="'+area+'" fill="'+lc+'" opacity="0.07"/><polyline points="'+poly+'" fill="none" stroke="'+lc+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+pts+'<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(padT+chartH)+'" stroke="#e5e7eb" stroke-width="1"/><line x1="'+padL+'" y1="'+(padT+chartH)+'" x2="'+(svgW-padR)+'" y2="'+(padT+chartH)+'" stroke="#e5e7eb" stroke-width="1"/>'+xLbls+'<text x="12" y="'+(padT+chartH/2)+'" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter,sans-serif" transform="rotate(-90,12,'+(padT+chartH/2)+')">BATERÍA %</text></svg><div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;"><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#22c55e;"></div>Alta ≥80%</div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;"></div>Media 50–79%</div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444;"></div>Baja 20–49%</div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#7f1d1d;"></div>Crítica &lt;20%</div><div style="margin-left:auto;font-size:10px;color:#9ca3af;">'+n+' registros · Hover para detalles</div></div></div>';
   })();
 
-  // ── Sección red (pre-calculada antes del template) ─────────────────
   const seccionRed = (() => {
     const red = puntosRed && puntosRed.length > 0 ? puntosRed : null;
     if (!red) return "";
@@ -881,8 +851,6 @@ function generarInformeDispositivo(datos, htmlFuente, analisis) {
     return "<div><div class=\"stitle\">Historial de Conectividad</div>" + "<div style='display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;'><div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid #4f8ef7;'><div style='font-size:22px;font-weight:700;color:#4f8ef7;'>"+wifiCount+"</div><div style='font-size:11px;color:#6b7280;margin-top:4px;'>📶 Registros WiFi</div></div><div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid #8b5cf6;'><div style='font-size:22px;font-weight:700;color:#8b5cf6;'>"+celCount+"</div><div style='font-size:11px;color:#6b7280;margin-top:4px;'>📡 Registros Celular</div></div><div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid "+lc+";'><div style='font-size:22px;font-weight:700;color:"+lc+";'>"+(dbmAvg!==null?dbmAvg+" dBm":"—")+"</div><div style='font-size:11px;color:#6b7280;margin-top:4px;'>📊 Señal promedio</div></div></div>"+svgHtml+"<div style='overflow-x:auto;border-radius:8px;border:1px solid #e5e7eb;'><table style='width:100%;border-collapse:collapse;font-size:12px;'><thead><tr style='background:#0d0f14;color:#e8eaf0;'><th style='padding:8px 10px;text-align:left;border-radius:8px 0 0 0;'>#</th><th style='padding:8px 10px;text-align:left;'>Fecha y hora</th><th style='padding:8px 10px;text-align:left;'>Tipo</th><th style='padding:8px 10px;text-align:left;'>Señal (dBm)</th><th style='padding:8px 10px;text-align:left;'>Calidad</th><th style='padding:8px 10px;text-align:left;'>Red / Operador</th><th style='padding:8px 10px;text-align:left;border-radius:0 8px 0 0;'>IP</th></tr></thead><tbody>"+filas+"</tbody></table></div>";
   })();
 
-
-  // Tabla de puntos GPS
   const tablaGPS = puntosGPS.length > 0 ? `
 <table class="data-table" style="margin-top:0;">
 <thead><tr><th>#</th><th>Fecha y hora</th><th>Latitud</th><th>Longitud</th></tr></thead>
@@ -891,7 +859,6 @@ ${puntosGPS.map((p,i)=>`<tr style="${i===0?'background:#f0fdf4;':''}">\n<td><b>$
 </tbody></table>
 <p style="font-size:11px;color:#6b7280;margin-top:8px;">Mostrando ${puntosGPS.length} registros GPS del mes en curso</p>` : `<p style="color:#9ca3af;font-size:13px;">Sin registros GPS disponibles para este dispositivo.</p>`;
 
-  // Script Leaflet para el informe
   const leafletScript = (lat && lng) ? `
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
@@ -942,34 +909,28 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--te
 .accent-bar{height:4px;background:linear-gradient(90deg,var(--acc),var(--acc2));}
 .rb{padding:36px 48px;display:flex;flex-direction:column;gap:32px;}
 .stitle{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--acc2);border-left:3px solid var(--acc);padding-left:10px;margin-bottom:16px;}
-/* FICHA */
 .ficha-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .ficha-card{background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:20px;}
 .ficha-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px;}
 .ficha-val{font-size:16px;font-weight:700;color:var(--text);}
 .ficha-sub{font-size:12px;color:var(--muted);margin-top:3px;}
 .estado-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;}
-/* BATERÍA */
 .bat-wrap{display:flex;align-items:center;gap:12px;margin-top:8px;}
 .bat-track{flex:1;background:#e5e7eb;border-radius:8px;height:16px;overflow:hidden;}
 .bat-fill{height:100%;border-radius:8px;transition:width .6s;}
 .bat-pct{font-size:22px;font-weight:800;min-width:54px;text-align:right;}
-/* SERIAL destacado */
 .serial-box{background:var(--dark);border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .serial-code{font-family:'Courier New',monospace;font-size:18px;font-weight:700;color:var(--acc);letter-spacing:1px;}
 .serial-label{font-size:11px;color:#6b7280;margin-top:2px;}
-/* MAPA */
 .mapa-wrap{border-radius:12px;overflow:hidden;border:1px solid var(--border);}
 #mapa-informe{height:380px;width:100%;}
 .map-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 16px;background:#4285F4;color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;}
-/* TABLA GPS */
 .data-table{width:100%;border-collapse:collapse;font-size:13px;}
 .data-table th{background:var(--dark);color:#e8eaf0;padding:10px 14px;text-align:left;font-weight:600;font-size:12px;}
 .data-table th:first-child{border-radius:8px 0 0 0;}.data-table th:last-child{border-radius:0 8px 0 0;}
 .data-table td{padding:9px 14px;border-bottom:1px solid var(--border);color:#374151;}
 .data-table tr:last-child td{border-bottom:none;}
 .data-table tr:nth-child(even) td{background:#f9fafb;}
-/* ANÁLISIS */
 .analisis-box{background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #d1fae5;border-radius:12px;padding:24px;}
 .ai-badge{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:var(--acc);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:14px;}
 .rf{background:#f9fafb;border-top:1px solid var(--border);padding:20px 48px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);}
@@ -996,8 +957,6 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--te
 <div class="accent-bar"></div>
 
 <div class="rb">
-
-  <!-- SERIAL DESTACADO -->
   <div>
     <div class="stitle">Identificación del Dispositivo</div>
     <div class="serial-box">
@@ -1009,7 +968,6 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--te
     </div>
   </div>
 
-  <!-- FICHA TÉCNICA -->
   <div>
     <div class="stitle">Ficha Técnica</div>
     <div class="ficha-grid">
@@ -1040,7 +998,6 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--te
     </div>
   </div>
 
-  <!-- MAPA + GPS -->
   ${(lat && lng) ? `
   <div>
     <div class="stitle">Ubicación y Recorrido GPS</div>
@@ -1061,10 +1018,7 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--te
     </div>
   </div>`}
 
-  <!-- GRÁFICA POR MODELO (si hay datos del grupo) -->
   ${(() => {
-    // Intentar extraer datos de modelos del htmlFuente del dispositivo
-    // Solo aplica si el html trae tablas con encendidos/apagados por modelo (resumen_negocio)
     const metricas = parsearMetricasFlota(htmlFuente || "");
     if (metricas.modelosArr && metricas.modelosArr.length > 1) {
       return `<div>
@@ -1072,7 +1026,6 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--te
     ${generarSvgBarrasModelos(metricas.modelosArr, "Encendidos vs Apagados — modelos del grupo")}
   </div>`;
     }
-    // Si no hay datos multi-modelo, mostrar mini-gráfica del dispositivo individual
     if (modelo && modelo !== "N/D") {
       const on  = conectado ? 1 : 0;
       const off = conectado ? 0 : 1;
@@ -1085,13 +1038,63 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--te
     return "";
   })()}
 
-  <!-- GRÁFICA HISTORIAL BATERÍA -->
-  <!-- GRÁFICA HISTORIAL BATERÍA -->
   ${seccionBateria}
-  <!-- SECCIÓN CONECTIVIDAD DE RED -->
-  <!-- SECCIÓN CONECTIVIDAD DE RED -->
   ${seccionRed}
-  <!-- DIAGNÓSTICO IA -->
+
+  ${(() => {
+    const trafico = puntosTrafico && puntosTrafico.length > 0 ? puntosTrafico : null;
+    if (!trafico) return "";
+    const totalUpMB   = trafico.reduce((s,r) => s + (r.uploadMB   || 0), 0);
+    const totalDownMB = trafico.reduce((s,r) => s + (r.downloadMB || 0), 0);
+    const totalMB     = trafico.reduce((s,r) => s + (r.totalMB    || 0), 0);
+    const maxMB       = Math.max(...trafico.map(r => r.totalMB || 0), 1);
+    const formatMB = mb => mb >= 1000 ? (mb/1024).toFixed(1)+' GB' : mb.toFixed(0)+' MB';
+    const colBar   = mb => mb >= 100 ? '#ef4444' : mb >= 50 ? '#f59e0b' : '#22c55e';
+    const filas = trafico.map((r, i) => {
+      const pct  = Math.round((r.totalMB / maxMB) * 100);
+      const col  = colBar(r.totalMB);
+      const tipo = r.tipoConexion === 'WiFi' ? '📶' : '📡';
+      return '<tr style="'+(i%2===0?'':'background:#f9fafb;')+'">'
+        +'<td style="padding:8px 12px;font-weight:600;color:#111827;">'+tipo+' '+(r.aplicacion||'Desconocida')+'</td>'
+        +'<td style="padding:8px 12px;font-size:12px;color:#6b7280;">'+(r.tipoConexion||'—')+'</td>'
+        +'<td style="padding:8px 12px;"><div style="display:flex;align-items:center;gap:8px;">'
+        +'<div style="flex:1;background:#e5e7eb;border-radius:4px;height:8px;min-width:60px;">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px;"></div></div>'
+        +'<span style="font-weight:700;color:'+col+';font-size:12px;min-width:54px;text-align:right;">'+formatMB(r.totalMB)+'</span>'
+        +'</div></td>'
+        +'<td style="padding:8px 12px;font-size:12px;color:#6b7280;text-align:right;">'+formatMB(r.uploadMB||0)+'</td>'
+        +'<td style="padding:8px 12px;font-size:12px;color:#6b7280;text-align:right;">'+formatMB(r.downloadMB||0)+'</td>'
+        +'<td style="padding:8px 12px;font-size:11px;color:#9ca3af;">'+(r.ultimoRegistro||'—')+'</td>'
+        +'</tr>';
+    }).join('');
+    return '<div>'
+      +'<div class="stitle">Consumo de Datos por Aplicación</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #4f8ef7;">'
+      +'<div style="font-size:24px;font-weight:700;color:#4f8ef7;">'+formatMB(totalMB)+'</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-top:4px;">📊 Total consumido</div></div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #22c55e;">'
+      +'<div style="font-size:24px;font-weight:700;color:#22c55e;">'+formatMB(totalDownMB)+'</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-top:4px;">⬇️ Descargado</div></div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #f59e0b;">'
+      +'<div style="font-size:24px;font-weight:700;color:#f59e0b;">'+formatMB(totalUpMB)+'</div>'
+      +'<div style="font-size:12px;color:#6b7280;margin-top:4px;">⬆️ Subido</div></div>'
+      +'</div>'
+      +'<div style="overflow-x:auto;border-radius:10px;border:1px solid #e5e7eb;">'
+      +'<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+      +'<thead><tr style="background:#0d0f14;color:#e8eaf0;">'
+      +'<th style="padding:10px 12px;text-align:left;border-radius:8px 0 0 0;font-size:12px;">Aplicación</th>'
+      +'<th style="padding:10px 12px;text-align:left;font-size:12px;">Conexión</th>'
+      +'<th style="padding:10px 12px;text-align:left;font-size:12px;">Total</th>'
+      +'<th style="padding:10px 12px;text-align:right;font-size:12px;">⬆️ Subida</th>'
+      +'<th style="padding:10px 12px;text-align:right;font-size:12px;">⬇️ Bajada</th>'
+      +'<th style="padding:10px 12px;text-align:left;border-radius:0 8px 0 0;font-size:12px;">Últ. registro</th>'
+      +'</tr></thead>'
+      +'<tbody>'+filas+'</tbody></table></div>'
+      +'<p style="font-size:11px;color:#6b7280;margin-top:8px;">Top '+trafico.length+' apps por consumo de datos · ordenadas de mayor a menor</p>'
+      +'</div>';
+  })()}
+
   <div>
     <div class="stitle">Diagnóstico Técnico</div>
     <div class="analisis-box"><div class="ai-badge">🤖 IA</div><div>${analisisHtml}</div></div>
@@ -1191,7 +1194,6 @@ function InformeModal({ msg, onClose }) {
         </div>
 
         <div className="modal-body">
-          {/* LOADING */}
           {fase === "loading" && (
             <div className="modal-loading">
               <div className="modal-loading-spinner" />
@@ -1199,7 +1201,6 @@ function InformeModal({ msg, onClose }) {
               <small>Analizando datos con IA</small>
             </div>
           )}
-          {/* ERROR */}
           {fase === "error" && (
             <div className="modal-loading">
               <div style={{fontSize:"36px"}}>⚠️</div>
@@ -1215,7 +1216,6 @@ function InformeModal({ msg, onClose }) {
               </div>
             </div>
           )}
-          {/* IFRAME */}
           {fase === "listo" && (
             <iframe
               ref={iframeRef}
@@ -1282,7 +1282,7 @@ function MessageBubble({ msg, onSendMessage }) {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// COMPONENTES BASE (sin cambios)
+// COMPONENTES BASE
 // ════════════════════════════════════════════════════════════════════
 function TypingBubble() {
   return (<div className="msg-row"><div className="msg-avatar bot-av">{BOT_AVATAR}</div><div className="bubble bot-bubble"><div className="typing"><span/><span/><span/></div></div></div>);
@@ -1338,10 +1338,10 @@ function MapMessage({ lat, lng, name, history }) {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// AUDIO BUTTON — Grabación + Whisper via n8n
+// AUDIO BUTTON
 // ════════════════════════════════════════════════════════════════════
 function AudioButton({ onTranscript, disabled }) {
-  const [status, setStatus] = useState("idle"); // idle | recording | transcribing
+  const [status, setStatus] = useState("idle");
   const [toast, setToast]   = useState("");
   const mediaRecRef  = useRef(null);
   const chunksRef    = useRef([]);
@@ -1466,7 +1466,6 @@ function ModeSelector({ activeMode, onSelect }) {
   );
 }
 
-
 // ════════════════════════════════════════════════════════════════════
 // SESIÓN — helpers
 // ════════════════════════════════════════════════════════════════════
@@ -1500,13 +1499,16 @@ function LoginScreen({ onLogin }) {
           && u.password === password
       );
       if (found) {
+        // ── FIX: guardar sesión y recargar la página limpiamente ──────
+        // Esto evita la pantalla negra causada por el re-render parcial de React.
+        // Al recargar, getSession() recupera el usuario y la app arranca autenticada.
         saveSession(found);
-        onLogin(found);
+        window.location.reload();
       } else {
         setError("Usuario o contraseña incorrectos");
         setLoading(false);
       }
-    }, 600); // simula latencia mínima
+    }, 600);
   };
 
   return (
@@ -1570,15 +1572,11 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-
 // ════════════════════════════════════════════════════════════════════
 // TRANSFORMAR HINTS CLICKEABLES
-// Convierte los td con 💡 "..." en spans clickeables
 // ════════════════════════════════════════════════════════════════════
 function transformarHints(htmlStr) {
   if (!htmlStr) return htmlStr;
-  // Patrón: 💡 Para ver seriales pregunta: <i>"Lista los ..."</i>
-  // o:      💡 Para ver seriales: <i>"Lista los ..."</i>
   return htmlStr.replace(
     /💡\s*(Para ver[^<]*:?\s*)<i>"([^"]+)"<\/i>/g,
     (match, prefix, query) => {
@@ -1595,7 +1593,14 @@ function transformarHints(htmlStr) {
 // APP
 // ════════════════════════════════════════════════════════════════════
 function App() {
-  const [currentUser, setCurrentUser] = useState(() => getSession());
+  const [currentUser, setCurrentUser] = useState(() => {
+    // Al cargar, recuperar sesión del sessionStorage (funciona tras el reload del login)
+    const session = getSession();
+    if (session) {
+      CLIENTE_CONFIG = session.cliente;
+    }
+    return session;
+  });
   const [sessions,setSessions]=useState(()=>loadSessions());
   const [activeChatId,setActiveChatId]=useState(null);
   const [messages,setMessages]=useState([]);
@@ -1605,38 +1610,20 @@ function App() {
   const bottomRef=useRef(null); const textareaRef=useRef(null);
   const activeChatIdRef=useRef(null); const activeModeRef=useRef("free");
 
-  // Si hay sesión activa, configurar CLIENTE_CONFIG global
-  useEffect(() => {
-    if (currentUser) {
-      CLIENTE_CONFIG = currentUser.cliente;
-    }
-  }, [currentUser]);
-
-  const handleLogin = (user) => {
-    CLIENTE_CONFIG = user.cliente;
-    setCurrentUser(user);
-    setSessions([]);
-    setMessages([]);
-    setActiveChatId(null);
-  };
-
   const handleLogout = () => {
     clearSession();
     CLIENTE_CONFIG = null;
-    setCurrentUser(null);
-    setSessions([]);
-    setMessages([]);
-    setActiveChatId(null);
+    window.location.reload();
   };
 
   if (!currentUser) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen onLogin={() => {}} />;
   }
 
-  // Envía el texto transcripto directo al chat (no pasa por el textarea)
+  // Envía el texto transcripto directo al chat
   const handleTranscript = useCallback((text) => {
     sendMessage(text);
-  }, [sendMessage]);
+  }, []);
 
   useEffect(()=>{activeChatIdRef.current=activeChatId;},[activeChatId]);
   useEffect(()=>{activeModeRef.current=activeMode;},[activeMode]);
@@ -1691,7 +1678,6 @@ function App() {
       const updated=[...prev,botMsg];
       const currentId=activeChatIdRef.current;
       const title=rawContent.slice(0,45)+(rawContent.length>45?"…":"");
-      // No guardar en sesión si fue un error
       if(!botMsg.isError){
         setSessions(ps=>{
           if(currentId) return ps.map(s=>s.id===currentId?{...s,messages:updated,updatedAt:Date.now()}:s);
@@ -1712,6 +1698,10 @@ function App() {
   const currentMode=MODES.find(m=>m.id===activeMode)||MODES[0];
   const placeholder=activeMode!=="free"?currentMode.hint:"Escribe tu consulta… (Enter para enviar, Shift+Enter para saltar línea)";
 
+  // ── Logo del cliente activo para la pantalla de bienvenida ──────────
+  const logoCliente = getLogoCliente(currentUser?.usuario);
+  const nombreCliente = currentUser?.cliente?.nombre || "SofIA";
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -1728,7 +1718,9 @@ function App() {
           ))}
         </div>
         <div className="sidebar-footer">
-          <div className="avatar" style={{background:'linear-gradient(135deg,'+currentUser.color+'33,'+currentUser.color+'66)',color:currentUser.color,border:'1px solid '+currentUser.color+'44'}}>{currentUser.avatar}</div>
+          <div className="avatar" style={{background:'#0d0f14',border:'1px solid '+currentUser.color+'55',padding:'2px',overflow:'hidden'}}>
+            <img src={getLogoCliente(currentUser?.usuario)} alt={currentUser.cliente.nombre} style={{width:'100%',height:'100%',objectFit:'contain',borderRadius:'50%',display:'block'}}/>
+          </div>
           <div className="user-info"><div className="user-name">{currentUser.nombre}</div><div className="user-role" style={{color:currentUser.color+'cc'}}>{currentUser.cliente.nombre}</div></div>
           <button onClick={handleLogout} title="Cerrar sesión" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',fontSize:'18px',lineHeight:1,padding:'4px',borderRadius:'6px',transition:'color .15s'}} onMouseEnter={e=>e.target.style.color='#ef4444'} onMouseLeave={e=>e.target.style.color='var(--text-muted)'}>⏏</button>
         </div>
@@ -1743,7 +1735,14 @@ function App() {
         <div className="messages-area">
           {isEmpty ? (
             <div className="welcome">
-              <div className="welcome-icon"><img src="https://th.bing.com/th/id/OIP.2j7fyal32zIJfnngWk45jAHaFH?w=222&h=185&c=7&r=0&o=7&dpr=1.5&pid=1.7&rm=3" alt="SofIA" style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"20px"}}/></div>
+              {/* ── Logo dinámico por cliente ─────────────────────────── */}
+              <div className="welcome-icon">
+                <img
+                  src={logoCliente}
+                  alt={nombreCliente}
+                  style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"20px"}}
+                />
+              </div>
               <h2>Hola, ¿en qué puedo ayudarte?</h2>
               <p>Soy tu asistente para consultar la base de datos GPS. Puedes preguntarme sobre dispositivos, ubicaciones y más.</p>
               <div className="suggestions">
