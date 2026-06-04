@@ -276,9 +276,9 @@ const USUARIOS = [
 // Reemplaza cada URL con el logo correspondiente a cada cliente.
 // La key es el campo "usuario" en minúsculas.
 const LOGOS_CLIENTE = {
-  "nutresa":   "https://download.logo.wine/logo/Grupo_Nutresa/Grupo_Nutresa-Logo.wine.png",   // 👈 reemplaza con logo Nutresa
-  "uma":       "https://images.rappi.com/soy-rappi-api-co/Logo_grupo_uma_sin_fondo_92af1111a9.jpg",   // 👈 reemplaza con logo UMA
-  "contegral": "https://colganados.com/wp-content/uploads/contegral.png",   // 👈 reemplaza con logo Contegral
+  "nutresa":   "https://b2kmnbrlfbl9jvgp.public.blob.vercel-storage.com/sofIAlogo.jpg",   // 👈 reemplaza con logo Nutresa
+  "uma":       "https://b2kmnbrlfbl9jvgp.public.blob.vercel-storage.com/sofIAlogo.jpg",   // 👈 reemplaza con logo UMA
+  "contegral": "https://b2kmnbrlfbl9jvgp.public.blob.vercel-storage.com/sofIAlogo.jpg",   // 👈 reemplaza con logo Contegral
 };
 // Devuelve el logo del cliente activo, o el logo genérico de SofIA como fallback
 const getLogoCliente = (usuario) =>
@@ -1252,7 +1252,8 @@ function MessageBubble({ msg, onSendMessage }) {
               const el = e.target.closest('.hint-clickable');
               if (el && onSendMessage) {
                 const query = el.dataset.query;
-                if (query) onSendMessage(query);
+                const mode  = el.dataset.mode || undefined;
+                if (query) onSendMessage(query, mode);
               }
             }}
           />}
@@ -1581,7 +1582,11 @@ function transformarHints(htmlStr) {
     /💡\s*(Para ver[^<]*:?\s*)<i>"([^"]+)"<\/i>/g,
     (match, prefix, query) => {
       const escaped = query.replace(/"/g, '&quot;');
-      return '<span class="hint-clickable" data-query="' + escaped + '">'
+      // Si el hint es para ver seriales/lista de dispositivos, forzar modo inventory
+      // para que el NLP lo interprete siempre como 'listado' y no como resumen_negocio
+      const esListado = /lista|serial|listar|ver dispositivos/i.test(query);
+      const modeAttr  = esListado ? ' data-mode="inventory"' : '';
+      return '<span class="hint-clickable" data-query="' + escaped + '"' + modeAttr + '>'
            + '<span class="hint-icon">💡</span>'
            + prefix + '<b>' + query + '</b>'
            + '</span>';
