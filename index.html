@@ -190,15 +190,15 @@ const USUARIOS = [
     cliente:{ path:"UMA", nombre:"UMA", negocios:"", regionales:"" }
   },
   {
-    usuario:"contegral", password:"contegral2026", nombre:"Administrador", avatar:"CN", color:"#4f8ef7",
-    cliente:{ path:"CONTEGRAL", nombre:"CONTEGRAL", negocios:"", regionales:"" }
+    usuario:"grupobios", password:"bios2026", nombre:"Administrador", avatar:"GB", color:"#4f8ef7",
+    cliente:{ path:"CONTEGRAL", nombre:"GRUPO BIOS", negocios:"", regionales:"" }
   },
 ];
 
 const LOGOS_CLIENTE = {
   "nutresa":   "https://download.logo.wine/logo/Grupo_Nutresa/Grupo_Nutresa-Logo.wine.png",
   "uma":       "https://images.rappi.com/soy-rappi-api-co/Logo_grupo_uma_sin_fondo_92af1111a9.jpg",
-  "contegral": "https://colganados.com/wp-content/uploads/contegral.png",
+  "grupobios": "https://tse1.mm.bing.net/th/id/OIP.NTBvZrXuBYMszMp-hN11AQAAAA?rs=1&pid=ImgDetMain&o=7&rm=3",
 };
 const getLogoCliente = (usuario) =>
   LOGOS_CLIENTE[(usuario || "").toLowerCase()] ||
