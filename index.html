@@ -7,6 +7,16 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    // Fuerza el runtime "classic" a nivel de preset para evitar el error
+    // "importSource cannot be set when runtime is classic" en versiones nuevas de Babel.
+    Babel.registerPreset("app", {
+      presets: [
+        [Babel.availablePresets["env"], {}],
+        [Babel.availablePresets["react"], { runtime: "classic" }]
+      ]
+    });
+  </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -19,7 +29,6 @@
     }
     html,body,#root{height:100%;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg-base);color:var(--text-main);}
     .app{display:flex;height:100vh;overflow:hidden;}
-    /* SIDEBAR */
     .sidebar{width:260px;min-width:260px;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 16px;gap:24px;}
     .sidebar-logo{display:flex;align-items:center;padding:4px 8px;justify-content:center;}
     .logo-img{height:70px;width:auto;object-fit:contain;}
@@ -39,7 +48,6 @@
     .user-info{flex:1;overflow:hidden;}
     .user-name{font-size:13px;font-weight:600;}
     .user-role{font-size:11px;color:var(--text-muted);}
-    /* CHAT MAIN */
     .chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
     .chat-header{padding:16px 28px;border-bottom:1px solid var(--border);background:var(--bg-base);display:flex;align-items:center;justify-content:space-between;}
     .chat-header-title{font-size:15px;font-weight:600;}
@@ -47,11 +55,10 @@
     .status-badge{display:flex;align-items:center;gap:6px;font-size:12px;color:#bbd531;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);border-radius:20px;padding:4px 12px;}
     .status-dot{width:6px;height:6px;border-radius:50%;background:#bbd531;animation:pulse 2s infinite;}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-    /* MESSAGES */
     .messages-area{flex:1;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;}
     .messages-area::-webkit-scrollbar{width:7px;}
     .messages-area::-webkit-scrollbar-track{background:rgba(255,255,255,0.03);border-radius:4px;}
-    .messages-area::-webkit-scrollbar-thumb{background:rgba(187,213,49,0.35);border-radius:4px;transition:background .2s;}
+    .messages-area::-webkit-scrollbar-thumb{background:rgba(187,213,49,0.35);border-radius:4px;}
     .messages-area::-webkit-scrollbar-thumb:hover{background:rgba(187,213,49,0.65);}
     .welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;text-align:center;padding:40px;}
     .welcome-icon{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#ffffff,#ffffff);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:8px;}
@@ -74,13 +81,11 @@
     .bubble td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04);}
     .bubble tr:last-child td{border-bottom:none;}
     .bubble tr:hover td{background:rgba(255,255,255,.03);}
-    /* TYPING */
     .typing{display:flex;align-items:center;gap:4px;padding:14px 16px;}
     .typing span{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.4;animation:blink 1.2s infinite;}
     .typing span:nth-child(2){animation-delay:.2s;}
     .typing span:nth-child(3){animation-delay:.4s;}
     @keyframes blink{0%,80%,100%{opacity:.4}40%{opacity:1}}
-    /* INPUT */
     .input-area{padding:16px 28px 20px;border-top:1px solid var(--border);background:var(--bg-base);position:relative;}
     .input-wrapper{display:flex;align-items:flex-end;gap:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:14px;padding:10px 14px;transition:border-color .15s;}
     .input-wrapper:focus-within{border-color:var(--accent);}
@@ -101,13 +106,11 @@
     .mode-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(187,213,49,.1);border:1px solid rgba(187,213,49,.3);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--accent);margin-bottom:8px;}
     .mode-badge-close{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:14px;line-height:1;padding:0;margin-left:2px;}
     .mode-badge-close:hover{color:var(--text-main);}
-    /* AUDIO BTN */
     .audio-btn{width:34px;height:34px;border-radius:8px;flex-shrink:0;background:var(--bg-card);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;position:relative;outline:none;}
     .audio-btn:hover{border-color:var(--accent);}
     .audio-btn.recording{background:rgba(239,68,68,.15);border-color:#ef4444;animation:recPulse 1s ease-in-out infinite;}
     .audio-btn.transcribing{background:rgba(79,142,247,.12);border-color:#4f8ef7;cursor:not-allowed;}
     @keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}
-    .audio-btn svg{transition:all .2s;}
     .audio-btn.recording svg{color:#ef4444;}
     .audio-btn.transcribing svg{color:#4f8ef7;animation:spin .8s linear infinite;}
     .audio-toast{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1a1d27;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--text-muted);white-space:nowrap;pointer-events:none;z-index:10;}
@@ -115,13 +118,11 @@
     .battery-bar-fill{height:100%;border-radius:6px;transition:width .6s ease;}
     .map-container{height:200px;border-radius:10px;margin-top:10px;overflow:hidden;}
     .leaflet-container{font-family:inherit!important;font-size:13px!important;}
-    /* ACTION BUTTONS */
     .action-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
     .csv-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(187,213,49,.12);border:1px solid rgba(187,213,49,.35);color:var(--accent);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;}
     .csv-btn:hover{background:rgba(187,213,49,.22);border-color:var(--accent);}
     .informe-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.35);color:#4f8ef7;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;}
     .informe-btn:hover{background:rgba(79,142,247,.22);border-color:#4f8ef7;}
-    /* MODAL */
     .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
     .modal-box{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;width:92vw;max-width:960px;height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:slideUp .25s ease;overflow:hidden;}
@@ -137,85 +138,36 @@
     .btn-close{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)!important;width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;}
     .btn-close:hover{background:rgba(239,68,68,.2);}
     .modal-body{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column;}
-    .modal-iframe{flex:1;width:100%;height:100%;border:none;border-bottom-left-radius:20px;border-bottom-right-radius:20px;display:block;}
     .modal-loading{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg-card);border-radius:0 0 20px 20px;min-height:400px;}
     .modal-loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg)}}
     .modal-loading p{font-size:13px;color:var(--text-muted);}
     .modal-loading small{font-size:11px;color:var(--text-dim);margin-top:-8px;}
-    .apikey-form{display:flex;flex-direction:column;gap:10px;padding:20px;min-width:320px;}
-    .apikey-form label{font-size:12px;color:var(--text-muted);font-weight:600;}
-    .apikey-input{background:var(--bg-input);border:1px solid var(--border);color:var(--text-main);border-radius:8px;padding:8px 12px;font-size:13px;outline:none;transition:border-color .15s;font-family:'Courier New',monospace;}
-    .apikey-input:focus{border-color:var(--accent);}
-    .apikey-submit{background:var(--accent);color:#0d0f14;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;}
-    .apikey-submit:hover{opacity:.88;}
-    .apikey-note{font-size:11px;color:var(--text-muted);line-height:1.5;}
-
-    /* ════ LOGIN ════════════════════════════════════════════════════════ */
-    .login-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
-      background:#0a0c10;overflow:hidden;}
+    .login-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#0a0c10;overflow:hidden;}
     .login-bg{position:absolute;inset:0;overflow:hidden;}
-    .login-bg-grid{position:absolute;inset:0;
-      background-image:linear-gradient(rgba(187,213,49,.04) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(187,213,49,.04) 1px,transparent 1px);
-      background-size:40px 40px;}
-    .login-bg-glow{position:absolute;width:600px;height:600px;border-radius:50%;
-      background:radial-gradient(circle,rgba(187,213,49,.08) 0%,transparent 70%);
-      top:50%;left:50%;transform:translate(-50%,-50%);animation:glowPulse 4s ease-in-out infinite;}
-    @keyframes glowPulse{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)}
-      50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
-    .login-card{position:relative;z-index:1;width:420px;max-width:92vw;
-      background:rgba(26,29,39,.95);border:1px solid rgba(187,213,49,.15);
-      border-radius:24px;padding:44px 40px 36px;
-      box-shadow:0 0 0 1px rgba(187,213,49,.05),0 32px 64px rgba(0,0,0,.6);
-      backdrop-filter:blur(20px);}
+    .login-bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(187,213,49,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(187,213,49,.04) 1px,transparent 1px);background-size:40px 40px;}
+    .login-bg-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(187,213,49,.08) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation:glowPulse 4s ease-in-out infinite;}
+    @keyframes glowPulse{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+    .login-card{position:relative;z-index:1;width:420px;max-width:92vw;background:rgba(26,29,39,.95);border:1px solid rgba(187,213,49,.15);border-radius:24px;padding:44px 40px 36px;box-shadow:0 0 0 1px rgba(187,213,49,.05),0 32px 64px rgba(0,0,0,.6);backdrop-filter:blur(20px);animation:loginIn .5s cubic-bezier(.34,1.56,.64,1);}
+    @keyframes loginIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
     .login-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:36px;}
     .login-logo-img{height:64px;width:auto;object-fit:contain;filter:drop-shadow(0 0 20px rgba(187,213,49,.3));}
-    .login-tagline{font-size:11px;letter-spacing:2px;text-transform:uppercase;
-      color:rgba(187,213,49,.6);margin-top:10px;font-family:'Courier New',monospace;}
+    .login-tagline{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(187,213,49,.6);margin-top:10px;font-family:'Courier New',monospace;}
     .login-field{margin-bottom:18px;}
-    .login-label{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;
-      text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
-    .login-input{width:100%;background:rgba(13,15,20,.8);border:1px solid var(--border);
-      color:var(--text-main);border-radius:10px;padding:12px 16px;font-size:14px;
-      outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit;}
-    .login-input:focus{border-color:rgba(187,213,49,.5);
-      box-shadow:0 0 0 3px rgba(187,213,49,.08);}
+    .login-label{display:block;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+    .login-input{width:100%;background:rgba(13,15,20,.8);border:1px solid var(--border);color:var(--text-main);border-radius:10px;padding:12px 16px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit;}
+    .login-input:focus{border-color:rgba(187,213,49,.5);box-shadow:0 0 0 3px rgba(187,213,49,.08);}
     .login-input::placeholder{color:var(--text-muted);}
-    .login-btn{width:100%;margin-top:8px;padding:13px;border:none;border-radius:10px;
-      background:var(--accent);color:#0d0f14;font-size:14px;font-weight:700;
-      cursor:pointer;letter-spacing:.3px;transition:all .2s;position:relative;overflow:hidden;}
-    .login-btn:hover{background:#cce440;transform:translateY(-1px);
-      box-shadow:0 8px 24px rgba(187,213,49,.25);}
+    .login-btn{width:100%;margin-top:8px;padding:13px;border:none;border-radius:10px;background:var(--accent);color:#0d0f14;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:all .2s;}
+    .login-btn:hover{background:#cce440;transform:translateY(-1px);box-shadow:0 8px 24px rgba(187,213,49,.25);}
     .login-btn:active{transform:translateY(0);}
     .login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-    .login-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);
-      border-radius:8px;padding:10px 14px;font-size:13px;color:#f87171;margin-top:16px;
-      text-align:center;animation:shake .3s ease;}
+    .login-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:10px 14px;font-size:13px;color:#f87171;margin-top:16px;text-align:center;animation:shake .3s ease;}
     @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
     .login-footer{text-align:center;margin-top:20px;font-size:11px;color:var(--text-muted);}
-    .login-dot{display:inline-block;width:6px;height:6px;border-radius:50%;
-      background:var(--accent);margin-right:6px;animation:pulse 2s infinite;}
-    /* Animación de entrada */
-    .login-card{animation:loginIn .5s cubic-bezier(.34,1.56,.64,1);}
-    @keyframes loginIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-
-    /* ── Hint 💡 clickeable ──────────────────────────────────────────── */
-    .hint-clickable {
-      display:inline-flex;align-items:center;gap:6px;
-      color:var(--accent);font-size:12px;font-style:italic;
-      cursor:pointer;padding:4px 10px;border-radius:6px;
-      border:1px solid rgba(187,213,49,0.2);
-      background:rgba(187,213,49,0.05);
-      transition:all .18s;user-select:none;
-      text-decoration:none;
-    }
-    .hint-clickable:hover{
-      background:rgba(187,213,49,0.14);
-      border-color:rgba(187,213,49,0.45);
-      transform:translateY(-1px);
-      box-shadow:0 3px 10px rgba(187,213,49,0.12);
-    }
+    .login-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:6px;animation:pulse 2s infinite;}
+    .hint-clickable{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:12px;font-style:italic;cursor:pointer;padding:4px 10px;border-radius:6px;border:1px solid rgba(187,213,49,0.2);background:rgba(187,213,49,0.05);transition:all .18s;user-select:none;text-decoration:none;}
+    .hint-clickable:hover{background:rgba(187,213,49,0.14);border-color:rgba(187,213,49,0.45);transform:translateY(-1px);box-shadow:0 3px 10px rgba(187,213,49,0.12);}
     .hint-clickable:active{transform:translateY(0);}
     .hint-clickable .hint-icon{font-style:normal;font-size:14px;}
     @media(max-width:640px){.sidebar{display:none;}.messages-area{padding:16px;}.input-area{padding:12px 16px 16px;}.modal-box{width:98vw;height:96vh;border-radius:14px;}}
@@ -223,64 +175,31 @@
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel">
+<script type="text/babel" data-presets="app">
 
-// ─── CONFIG ───────────────────────────────────────────────────────────
-const API_BASE        = "https://n8ntest.istreetlab.com";
-const EMPRESA         = "COMPUNET";
+const API_BASE = "https://n8ntest.istreetlab.com";
+const EMPRESA  = "COMPUNET";
 
-// ── Tabla de usuarios ─────────────────────────────────────────────────
 const USUARIOS = [
   {
-    usuario:    "nutresa",
-    password:   "nutresa2024",
-    nombre:     "Administrador",
-    avatar:     "NM",
-    color:      "#bbd531",
-    cliente: {
-      path:       "NUTRESA MOVILIDAD",
-      nombre:     "NUTRESA MOVILIDAD",
-      negocios:   "COMERCIAL NUTRESA, Confiteca, Opperar Celulares, Grupo Nutresa",
-      regionales: "Indirecta, Bogotá, Antioquia, Norte, Sur, Medellín",
-    }
+    usuario:"nutresa", password:"nutresa2024", nombre:"Administrador", avatar:"NM", color:"#bbd531",
+    cliente:{ path:"NUTRESA MOVILIDAD", nombre:"NUTRESA MOVILIDAD", negocios:"COMERCIAL NUTRESA, Confiteca, Opperar Celulares, Grupo Nutresa", regionales:"Indirecta, Bogotá, Antioquia, Norte, Sur, Medellín" }
   },
   {
-    usuario:    "uma",
-    password:   "uma2024",
-    nombre:     "Administrador",
-    avatar:     "UM",
-    color:      "#4f8ef7",
-    cliente: {
-      path:       "UMA",
-      nombre:     "UMA",
-      negocios:   "",
-      regionales: "",
-    }
+    usuario:"uma", password:"uma2024", nombre:"Administrador", avatar:"UM", color:"#4f8ef7",
+    cliente:{ path:"UMA", nombre:"UMA", negocios:"", regionales:"" }
   },
   {
-    usuario:    "contegral",
-    password:   "contegral2026",
-    nombre:     "Administrador",
-    avatar:     "CN",
-    color:      "#4f8ef7",
-    cliente: {
-      path:       "CONTEGRAL",
-      nombre:     "CONTEGRAL",
-      negocios:   "",
-      regionales: "",
-    }
+    usuario:"contegral", password:"contegral2026", nombre:"Administrador", avatar:"CN", color:"#4f8ef7",
+    cliente:{ path:"CONTEGRAL", nombre:"CONTEGRAL", negocios:"", regionales:"" }
   },
 ];
 
-// ─── LOGOS POR CLIENTE ────────────────────────────────────────────────
-// Reemplaza cada URL con el logo correspondiente a cada cliente.
-// La key es el campo "usuario" en minúsculas.
 const LOGOS_CLIENTE = {
-  "nutresa":   "https://download.logo.wine/logo/Grupo_Nutresa/Grupo_Nutresa-Logo.wine.png",   // 👈 reemplaza con logo Nutresa
-  "uma":       "https://images.rappi.com/soy-rappi-api-co/Logo_grupo_uma_sin_fondo_92af1111a9.jpg",   // 👈 reemplaza con logo UMA
-  "contegral": "https://colganados.com/wp-content/uploads/contegral.png",   // 👈 reemplaza con logo Contegral
+  "nutresa":   "https://download.logo.wine/logo/Grupo_Nutresa/Grupo_Nutresa-Logo.wine.png",
+  "uma":       "https://images.rappi.com/soy-rappi-api-co/Logo_grupo_uma_sin_fondo_92af1111a9.jpg",
+  "contegral": "https://colganados.com/wp-content/uploads/contegral.png",
 };
-// Devuelve el logo del cliente activo, o el logo genérico de SofIA como fallback
 const getLogoCliente = (usuario) =>
   LOGOS_CLIENTE[(usuario || "").toLowerCase()] ||
   "https://b2kmnbrlfbl9jvgp.public.blob.vercel-storage.com/sofIAlogo.jpg";
@@ -309,15 +228,15 @@ const SUGGESTIONS = [
   "Desglose por modelo"
 ];
 
-// ─── HELPERS ──────────────────────────────────────────────────────────
 const formatTime = d => new Date(d).toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
 const genId = () => Date.now().toString(36)+Math.random().toString(36).slice(2);
 const loadSessions = () => { try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}catch{return[]} };
 const saveSessions = s => { try{localStorage.setItem(STORAGE_KEY,JSON.stringify(s))}catch{} };
 const escapeHtml = t => String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br/>");
 
+// ── Fonts link para informes (sin @import en template literals) ─────
+const FONTS_LINK = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"/>';
 
-// ─── DETECCIÓN DE TIPO DE MENSAJE ─────────────────────────────────────
 function detectarTipoInforme(msg) {
   if (!msg || msg.role !== "bot") return "ninguno";
   if (msg.map) return "dispositivo";
@@ -330,17 +249,9 @@ function detectarTipoInforme(msg) {
   return "ninguno";
 }
 
-// ─── PARSER DE MÉTRICAS (FLOTA) ───────────────────────────────────────
 function parsearMetricasFlota(html, informeData) {
   if (informeData && informeData.tipo === 'flota' && informeData.kpis) {
-    return {
-      total:      informeData.kpis.total,
-      online:     informeData.kpis.online,
-      offline:    informeData.kpis.offline,
-      modelos:    informeData.kpis.modelos,
-      modelosArr: informeData.modelosArr || [],
-      textoPlano: ""
-    };
+    return { total:informeData.kpis.total, online:informeData.kpis.online, offline:informeData.kpis.offline, modelos:informeData.kpis.modelos, modelosArr:informeData.modelosArr||[], textoPlano:"" };
   }
   const parser = new DOMParser();
   const doc = parser.parseFromString(html || "","text/html");
@@ -348,795 +259,520 @@ function parsearMetricasFlota(html, informeData) {
   const onlineMatch  = texto.match(/(?:🟢|En línea|Conectados?|Encendidos?)[\s:·]*(\d+)/i);
   const offlineMatch = texto.match(/(?:🔴|Desconectados?|Apagados?)[\s:·]*(\d+)/i);
   const totalMatch   = texto.match(/Total[^\d]*(\d+)/i);
-  return {
-    total:      totalMatch   ? parseInt(totalMatch[1])   : null,
-    online:     onlineMatch  ? parseInt(onlineMatch[1])  : null,
-    offline:    offlineMatch ? parseInt(offlineMatch[1]) : null,
-    modelos:    null,
-    modelosArr: [],
-    textoPlano: texto.slice(0, 3000)
-  };
+  return { total:totalMatch?parseInt(totalMatch[1]):null, online:onlineMatch?parseInt(onlineMatch[1]):null, offline:offlineMatch?parseInt(offlineMatch[1]):null, modelos:null, modelosArr:[], textoPlano:texto.slice(0,3000) };
 }
 
-// ─── GENERADOR SVG BARRAS APILADAS POR MODELO ─────────────────────────
 function generarSvgBarrasModelos(modelosArr, titulo) {
   if (!modelosArr || modelosArr.length === 0) return "";
-
-  const items  = modelosArr.slice(0, 15);
-  const barH   = 32;
-  const gap    = 14;
-  const labelW = 120;
-  const chartW = 520;
-  const padT   = 36;
-  const padB   = 20;
-  const extraR = 100;
-  const svgW   = labelW + chartW + extraR;
-  const svgH   = padT + items.length * (barH + gap) + padB;
-  const maxVal = Math.max(...items.map(m => m.total), 1);
-
-  const C_ON  = "#22c55e";
-  const C_OFF = "#ef4444";
-  const C_ON2 = "#16a34a";
-  const C_OFF2= "#b91c1c";
-
-  const MIN_INSIDE = 36;
-  const MIN_BAR = 4;
-
-  let defs = "";
-  let bars = "";
-
-  items.forEach((m, i) => {
-    const y      = padT + i * (barH + gap);
-    const wTotal = Math.max(Math.round((m.total / maxVal) * chartW), MIN_BAR);
-    const wOn    = m.total > 0 ? Math.round((m.on  / m.total) * wTotal) : 0;
-    const wOff   = wTotal - wOn;
-    const x0     = labelW;
-    const pct    = m.total > 0 ? Math.round((m.on / m.total) * 100) : 0;
-    const cy     = y + barH / 2 + 4.5;
-
-    defs += `
-      <linearGradient id="g_on_${i}" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="${C_ON2}"/>
-        <stop offset="100%" stop-color="${C_ON}"/>
-      </linearGradient>
-      <linearGradient id="g_off_${i}" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="${C_OFF2}"/>
-        <stop offset="100%" stop-color="${C_OFF}"/>
-      </linearGradient>`;
-
-    bars += `<rect x="${x0}" y="${y}" width="${chartW}" height="${barH}" rx="6" fill="#f1f5f9"/>`;
-
-    if (wOn >= MIN_BAR) {
-      const r = 6;
-      const noOff = wOff < MIN_BAR;
-      if (noOff) {
-        bars += `<rect x="${x0}" y="${y}" width="${wOn}" height="${barH}" rx="${r}" fill="url(#g_on_${i})"/>`;
-      } else {
-        const x2 = x0 + wOn, y2 = y + barH;
-        bars += `<path d="M${x0+r},${y} H${x2} V${y2} H${x0+r} Q${x0},${y2} ${x0},${y2-r} V${y+r} Q${x0},${y} ${x0+r},${y} Z" fill="url(#g_on_${i})"/>`;
-      }
-      if (wOn >= MIN_INSIDE) {
-        bars += `<text x="${x0 + wOn/2}" y="${cy}" text-anchor="middle" fill="white" font-size="11" font-weight="700" font-family="Inter,sans-serif">${m.on}</text>`;
-      } else {
-        bars += `<text x="${x0 + wOn/2}" y="${y - 4}" text-anchor="middle" fill="${C_ON2}" font-size="10" font-weight="700" font-family="Inter,sans-serif">${m.on}</text>`;
-      }
-    }
-
-    if (wOff >= MIN_BAR) {
-      const xOff = x0 + wOn;
-      const r = 6;
-      const x2 = xOff + wOff, y2 = y + barH;
-      bars += `<path d="M${xOff},${y} H${x2-r} Q${x2},${y} ${x2},${y+r} V${y2-r} Q${x2},${y2} ${x2-r},${y2} H${xOff} Z" fill="url(#g_off_${i})"/>`;
-
-      if (wOff >= MIN_INSIDE) {
-        bars += `<text x="${xOff + wOff/2}" y="${cy}" text-anchor="middle" fill="white" font-size="11" font-weight="700" font-family="Inter,sans-serif">${m.off}</text>`;
-      } else {
-        const labelX = x2 + 6;
-        bars += `<line x1="${x2}" y1="${y + barH/2}" x2="${labelX - 1}" y2="${y + barH/2}" stroke="${C_OFF}" stroke-width="1" opacity="0.5"/>`;
-        bars += `<text x="${labelX}" y="${cy}" text-anchor="start" fill="${C_OFF}" font-size="10" font-weight="700" font-family="Inter,sans-serif">${m.off}</text>`;
-      }
-    }
-
-    const nombre = m.nombre.length > 15 ? m.nombre.slice(0, 14) + "…" : m.nombre;
-    bars += `<text x="${labelW - 8}" y="${cy}" text-anchor="end" fill="#374151" font-size="12" font-weight="600" font-family="Inter,sans-serif">${nombre}</text>`;
-
-    const pctColor = pct >= 70 ? C_ON : pct >= 40 ? "#f59e0b" : C_OFF;
-    bars += `<text x="${x0 + chartW + 10}" y="${cy}" fill="${pctColor}" font-size="11" font-weight="700" font-family="Inter,sans-serif">${pct}%</text>`;
+  const items=modelosArr.slice(0,15), barH=32, gap=14, labelW=120, chartW=520;
+  const padT=36, padB=20, extraR=100;
+  const svgW=labelW+chartW+extraR, svgH=padT+items.length*(barH+gap)+padB;
+  const maxVal=Math.max(...items.map(m=>m.total),1);
+  const C_ON="#22c55e", C_OFF="#ef4444", C_ON2="#16a34a", C_OFF2="#b91c1c";
+  const MIN_INSIDE=36, MIN_BAR=4;
+  let defs="", bars="";
+  items.forEach((m,i)=>{
+    const y=padT+i*(barH+gap), wTotal=Math.max(Math.round((m.total/maxVal)*chartW),MIN_BAR);
+    const wOn=m.total>0?Math.round((m.on/m.total)*wTotal):0, wOff=wTotal-wOn;
+    const x0=labelW, pct=m.total>0?Math.round((m.on/m.total)*100):0, cy=y+barH/2+4.5;
+    defs+=`<linearGradient id="g_on_${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${C_ON2}"/><stop offset="100%" stop-color="${C_ON}"/></linearGradient>`;
+    defs+=`<linearGradient id="g_off_${i}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${C_OFF2}"/><stop offset="100%" stop-color="${C_OFF}"/></linearGradient>`;
+    bars+=`<rect x="${x0}" y="${y}" width="${chartW}" height="${barH}" rx="6" fill="#f1f5f9"/>`;
+    if(wOn>=MIN_BAR){const r=6,noOff=wOff<MIN_BAR;if(noOff)bars+=`<rect x="${x0}" y="${y}" width="${wOn}" height="${barH}" rx="${r}" fill="url(#g_on_${i})"/>`;else{const x2=x0+wOn,y2=y+barH;bars+=`<path d="M${x0+r},${y} H${x2} V${y2} H${x0+r} Q${x0},${y2} ${x0},${y2-r} V${y+r} Q${x0},${y} ${x0+r},${y} Z" fill="url(#g_on_${i})"/>`;}if(wOn>=MIN_INSIDE)bars+=`<text x="${x0+wOn/2}" y="${cy}" text-anchor="middle" fill="white" font-size="11" font-weight="700" font-family="Inter,sans-serif">${m.on}</text>`;else bars+=`<text x="${x0+wOn/2}" y="${y-4}" text-anchor="middle" fill="${C_ON2}" font-size="10" font-weight="700" font-family="Inter,sans-serif">${m.on}</text>`;}
+    if(wOff>=MIN_BAR){const xOff=x0+wOn,r=6,x2=xOff+wOff,y2=y+barH;bars+=`<path d="M${xOff},${y} H${x2-r} Q${x2},${y} ${x2},${y+r} V${y2-r} Q${x2},${y2} ${x2-r},${y2} H${xOff} Z" fill="url(#g_off_${i})"/>`;if(wOff>=MIN_INSIDE)bars+=`<text x="${xOff+wOff/2}" y="${cy}" text-anchor="middle" fill="white" font-size="11" font-weight="700" font-family="Inter,sans-serif">${m.off}</text>`;else{const lx=x2+6;bars+=`<line x1="${x2}" y1="${y+barH/2}" x2="${lx-1}" y2="${y+barH/2}" stroke="${C_OFF}" stroke-width="1" opacity="0.5"/><text x="${lx}" y="${cy}" text-anchor="start" fill="${C_OFF}" font-size="10" font-weight="700" font-family="Inter,sans-serif">${m.off}</text>`;}}
+    const nombre=m.nombre.length>15?m.nombre.slice(0,14)+"…":m.nombre;
+    bars+=`<text x="${labelW-8}" y="${cy}" text-anchor="end" fill="#374151" font-size="12" font-weight="600" font-family="Inter,sans-serif">${nombre}</text>`;
+    const pctColor=pct>=70?C_ON:pct>=40?"#f59e0b":C_OFF;
+    bars+=`<text x="${x0+chartW+10}" y="${cy}" fill="${pctColor}" font-size="11" font-weight="700" font-family="Inter,sans-serif">${pct}%</text>`;
   });
-
-  const axisLabel = `<text x="${labelW}" y="16" fill="#9ca3af" font-size="10" font-family="Inter,sans-serif" font-weight="600" letter-spacing="0.5">DISPOSITIVOS POR MODELO</text>`;
-
-  return `
-<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:24px;overflow-x:auto;">
-  <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:16px;">${titulo}</div>
-  <svg viewBox="0 0 ${svgW} ${svgH}" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;min-width:420px;">
-    <defs>${defs}</defs>
-    ${axisLabel}
-    ${bars}
-  </svg>
-  <div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap;">
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;">
-      <div style="width:12px;height:12px;border-radius:3px;background:${C_ON};"></div> Encendidos / En línea
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;">
-      <div style="width:12px;height:12px;border-radius:3px;background:${C_OFF};"></div> Apagados / Desconectados
-    </div>
-    <div style="margin-left:auto;font-size:11px;color:#9ca3af;">% = conectividad por modelo</div>
-  </div>
-</div>`;
+  return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:24px;overflow-x:auto;">'
+    +'<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:16px;">'+titulo+'</div>'
+    +'<svg viewBox="0 0 '+svgW+' '+svgH+'" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;min-width:420px;">'
+    +'<defs>'+defs+'</defs>'
+    +'<text x="'+labelW+'" y="16" fill="#9ca3af" font-size="10" font-family="Inter,sans-serif" font-weight="600" letter-spacing="0.5">DISPOSITIVOS POR MODELO</text>'
+    +bars+'</svg>'
+    +'<div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap;">'
+    +'<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;"><div style="width:12px;height:12px;border-radius:3px;background:'+C_ON+';"></div> Encendidos / En línea</div>'
+    +'<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;"><div style="width:12px;height:12px;border-radius:3px;background:'+C_OFF+';"></div> Apagados / Desconectados</div>'
+    +'<div style="margin-left:auto;font-size:11px;color:#9ca3af;">% = conectividad por modelo</div>'
+    +'</div></div>';
 }
 
-// ─── PARSER DE DATOS DE DISPOSITIVO ──────────────────────────────────
 function parsearDatosDispositivo(msg) {
   if (msg.informe_data && msg.informe_data.tipo === 'dispositivo' && msg.informe_data.dispositivo) {
     const d = msg.informe_data.dispositivo;
     return {
-      nombre:      d.nombre      || "Dispositivo",
-      serial:      d.serial      || "N/D",
-      modelo:      d.modelo      || "N/D",
-      fabricante:  d.fabricante  || "",
-      estado:      d.estado      || "Desconectado",
-      bateria:     d.bateria,
-      negocio:     d.negocio     || "NUTRESA MOVILIDAD",
-      ultimaConex: d.ultimaConex || "N/D",
-      lat:         d.lat,
-      lng:         d.lng,
-      puntosGPS:      msg.informe_data.puntosGPS      || [],
-      puntosBat:      msg.informe_data.puntosBat      || [],
-      puntosRed:      msg.informe_data.puntosRed      || [],
-      puntosTrafico:  msg.informe_data.puntosTrafico  || []
+      nombre:d.nombre||"Dispositivo", serial:d.serial||"N/D", modelo:d.modelo||"N/D",
+      fabricante:d.fabricante||"", estado:d.estado||"Desconectado", bateria:d.bateria,
+      negocio:d.negocio||"NUTRESA MOVILIDAD", ultimaConex:d.ultimaConex||"N/D",
+      lat:d.lat, lng:d.lng,
+      puntosGPS:msg.informe_data.puntosGPS||[], puntosBat:msg.informe_data.puntosBat||[],
+      puntosRed:msg.informe_data.puntosRed||[], puntosTrafico:msg.informe_data.puntosTrafico||[],
+      storage:msg.informe_data.storage||null,
     };
   }
   const bat = msg.battery || {};
   const parser = new DOMParser();
   const doc = msg.html ? parser.parseFromString(msg.html,"text/html") : null;
-  const texto = doc ? (doc.body.innerText || doc.body.textContent || "") : "";
-  const getField = (label) => {
-    const match = texto.match(new RegExp(label+"[:\\s]+([^\\n]+)","i"));
-    return match ? match[1].trim() : null;
-  };
+  const texto = doc ? (doc.body.innerText||doc.body.textContent||"") : "";
+  const getField = label => { const m=texto.match(new RegExp(label+"[:\\s]+([^\\n]+)","i")); return m?m[1].trim():null; };
   let puntosGPS = [];
-  if (msg.map && msg.map.history && msg.map.history.length > 0) puntosGPS = msg.map.history;
-  else if (msg.map) puntosGPS = [{ lat: msg.map.lat, lng: msg.map.lng, fecha: "Último registro", num: 1 }];
+  if (msg.map&&msg.map.history&&msg.map.history.length>0) puntosGPS=msg.map.history;
+  else if (msg.map) puntosGPS=[{lat:msg.map.lat,lng:msg.map.lng,fecha:"Último registro",num:1}];
   return {
-    nombre:      bat.name    || getField("dispositivo") || "Dispositivo",
-    serial:      bat.serial  || getField("serial") || "N/D",
-    modelo:      bat.model   || getField("modelo") || "N/D",
-    fabricante:  getField("fabricante") || "",
-    estado:      getField("estado") || (bat.online_raw ? "Conectado" : "Desconectado"),
-    bateria:     bat.level != null ? bat.level : (parseInt(getField("batería")) || null),
-    negocio:     getField("negocio") || CLIENTE_CONFIG.nombre,
-    ultimaConex: bat.lastSeen || getField("última conex") || "N/D",
-    lat:         msg.map?.lat || null,
-    lng:         msg.map?.lng || null,
-    puntosGPS,
-    puntosBat:      [],
-    puntosRed:      [],
-    puntosTrafico:  []
+    nombre:bat.name||getField("dispositivo")||"Dispositivo", serial:bat.serial||getField("serial")||"N/D",
+    modelo:bat.model||getField("modelo")||"N/D", fabricante:getField("fabricante")||"",
+    estado:getField("estado")||(bat.online_raw?"Conectado":"Desconectado"),
+    bateria:bat.level!=null?bat.level:(parseInt(getField("batería"))||null),
+    negocio:getField("negocio")||CLIENTE_CONFIG.nombre,
+    ultimaConex:bat.lastSeen||getField("última conex")||"N/D",
+    lat:msg.map?msg.map.lat:null, lng:msg.map?msg.map.lng:null,
+    puntosGPS, puntosBat:[], puntosRed:[], puntosTrafico:[], storage:null,
   };
 }
 
-// ─── ANÁLISIS IA — delega a n8n /api/informe ─────────────────────────
 async function generarAnalisisIA(tipo, informeData) {
-  const resp = await fetch(`${API_BASE}/webhook/api/informe`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tipo, informe_data: informeData, cliente_nombre: CLIENTE_CONFIG ? CLIENTE_CONFIG.nombre : '' })
+  const resp = await fetch(API_BASE+"/webhook/api/informe", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({tipo, informe_data:informeData, cliente_nombre:CLIENTE_CONFIG?CLIENTE_CONFIG.nombre:''})
   });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status} al llamar /api/informe`);
+  if (!resp.ok) throw new Error("HTTP "+resp.status+" al llamar /api/informe");
   const data = await resp.json();
   if (!data.analisis) throw new Error("El servidor no devolvió análisis");
   return data.analisis;
 }
 
-// ─── DESCARGA HTML ────────────────────────────────────────────────────
 function descargarHtml(htmlContent, filename) {
-  const blob = new Blob([htmlContent],{type:"text/html;charset=utf-8;"});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href=url; a.download=filename;
+  const blob=new Blob([htmlContent],{type:"text/html;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=filename;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
-// ─── DESCARGA CSV ─────────────────────────────────────────────────────
 function downloadCSV(html, filename) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html,"text/html");
-  const tables = doc.querySelectorAll("table");
+  const parser=new DOMParser(), doc=parser.parseFromString(html,"text/html");
+  const tables=doc.querySelectorAll("table");
   if (!tables.length) return;
-  let csv = "\uFEFF";
-  tables.forEach((table,tIdx) => {
-    const titulo = table.querySelector("th[colspan]");
-    if (titulo) csv += `"${(titulo.textContent||"").replace(/"/g,'""').trim()}"\n`;
-    table.querySelectorAll("tr").forEach(row => {
-      if ((row.textContent||"").includes("💡")) return;
-      if (row.querySelector("th[colspan]")) return;
-      const vals = Array.from(row.querySelectorAll("th,td")).map(c=>`"${(c.textContent||"").trim().replace(/\n/g," ").replace(/"/g,'""')}"`);
-      if (vals.length) csv += vals.join(",")+"\n";
+  let csv="\uFEFF";
+  tables.forEach((table,tIdx)=>{
+    const titulo=table.querySelector("th[colspan]");
+    if(titulo) csv+='"'+(titulo.textContent||"").replace(/"/g,'""').trim()+'"\n';
+    table.querySelectorAll("tr").forEach(row=>{
+      if((row.textContent||"").includes("💡")) return;
+      if(row.querySelector("th[colspan]")) return;
+      const vals=Array.from(row.querySelectorAll("th,td")).map(c=>'"'+(c.textContent||"").trim().replace(/\n/g," ").replace(/"/g,'""')+'"');
+      if(vals.length) csv+=vals.join(",")+"\n";
     });
-    if (tIdx < tables.length-1) csv += "\n";
+    if(tIdx<tables.length-1) csv+="\n";
   });
-  const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href=url; a.download=filename;
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=filename;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
 // ════════════════════════════════════════════════════════════════════
-// GENERADOR DE INFORME — FLOTA
+// CSS COMPARTIDO PARA INFORMES (sin @import)
+// ════════════════════════════════════════════════════════════════════
+var CSS_INFORME_BASE = [
+  "*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}",
+  ":root{--acc:#bbd531;--acc2:#4f8ef7;--dark:#0d0f14;--border:#e5e7eb;--text:#111827;--muted:#6b7280;}",
+  "body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--text);}",
+  ".page{max-width:880px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 40px rgba(0,0,0,.08);}",
+  ".rh{background:var(--dark);padding:36px 48px 32px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;}",
+  ".hl{display:flex;flex-direction:column;gap:10px;}",
+  ".logo-row{display:flex;align-items:center;gap:12px;}",
+  ".logo-ico{width:44px;height:44px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}",
+  ".emp{font-size:20px;font-weight:700;color:#fff;}.emp-sub{font-size:12px;color:#9ca3af;}",
+  ".rt{font-size:28px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1.2;}",
+  ".rs{font-size:14px;color:#9ca3af;margin-top:4px;}",
+  ".badge{display:inline-flex;align-items:center;gap:6px;background:rgba(187,213,49,.15);border:1px solid rgba(187,213,49,.3);border-radius:20px;padding:4px 12px;margin-top:12px;font-size:11px;color:var(--acc);font-weight:600;}",
+  ".hr{text-align:right;flex-shrink:0;color:#e8eaf0;}",
+  ".dlabel{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:2px;}",
+  ".dval{font-size:15px;font-weight:600;}.dsub{font-size:12px;color:#9ca3af;margin-top:4px;}",
+  ".accent-bar{height:4px;background:linear-gradient(90deg,var(--acc) 0%,var(--acc2) 100%);}",
+  ".rb{padding:40px 48px;display:flex;flex-direction:column;gap:36px;}",
+  ".stitle{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--acc2);border-left:3px solid var(--acc);padding-left:10px;margin-bottom:16px;}",
+  ".data-table{width:100%;border-collapse:collapse;font-size:13px;}",
+  ".data-table th{background:var(--dark);color:#e8eaf0;padding:10px 14px;text-align:left;font-weight:600;font-size:12px;}",
+  ".data-table th:first-child{border-radius:8px 0 0 0;}.data-table th:last-child{border-radius:0 8px 0 0;}",
+  ".data-table td{padding:9px 14px;border-bottom:1px solid var(--border);color:#374151;}",
+  ".data-table tr:last-child td{border-bottom:none;}.data-table tr:nth-child(even) td{background:#f9fafb;}.data-table tr:hover td{background:#f0fdf4;}",
+  ".analisis-box{background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #d1fae5;border-radius:12px;padding:24px;}",
+  ".ai-badge{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:var(--acc);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:14px;}",
+  ".rf{background:#f9fafb;border-top:1px solid var(--border);padding:20px 48px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);}",
+  ".rf-brand{font-weight:600;color:#374151;}",
+  "@media print{body{background:#fff;}.page{box-shadow:none;}}",
+  "@media(max-width:600px){.rh{padding:24px;flex-direction:column;}.rb{padding:24px;}.rf{padding:16px 24px;flex-direction:column;gap:6px;}}"
+].join("");
+
+// ════════════════════════════════════════════════════════════════════
+// GENERADOR INFORME FLOTA
 // ════════════════════════════════════════════════════════════════════
 function generarInformeFlota(htmlFuente, analisis, informeDataParam) {
-  const fecha   = new Date();
-  const fechaStr = fecha.toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
-  const horaStr  = fecha.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
-  const periodo  = fecha.toLocaleDateString("es-CO",{month:"long",year:"numeric"});
-  const { total, online, offline, modelos, modelosArr } = parsearMetricasFlota(htmlFuente, informeDataParam);
-  const onlineVal  = online  ?? "—"; const offlineVal = offline ?? "—"; const totalVal = total ?? "—";
-  const modelosVal = modelos ?? "—";
-  const pctOnline  = (total && online)  ? Math.round((online/total)*100)  : null;
-  const pctOffline = (total && offline) ? Math.round((offline/total)*100) : null;
-  const BW = 320;
-  const onlineBar  = pctOnline  != null ? Math.round((pctOnline/100)*BW)  : 0;
-  const offlineBar = pctOffline != null ? Math.round((pctOffline/100)*BW) : 0;
-  const graficaModelos = modelosArr && modelosArr.length > 0
-    ? generarSvgBarrasModelos(modelosArr, `Encendidos vs Apagados por modelo — ${periodo}`)
-    : "";
-  const analisisHtml = analisis
-    ? `<p style="line-height:1.85;color:#374151;">${analisis.replace(/\n/g,"<br><br>")}</p>`
-    : `<p style="color:#9ca3af;font-style:italic;">Análisis no disponible.</p>`;
+  var fecha=new Date();
+  var fechaStr=fecha.toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
+  var horaStr=fecha.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
+  var periodo=fecha.toLocaleDateString("es-CO",{month:"long",year:"numeric"});
+  var m=parsearMetricasFlota(htmlFuente,informeDataParam);
+  var total=m.total, online=m.online, offline=m.offline, modelos=m.modelos, modelosArr=m.modelosArr;
+  var onlineVal=online!==null&&online!==undefined?online:"—";
+  var offlineVal=offline!==null&&offline!==undefined?offline:"—";
+  var totalVal=total!==null&&total!==undefined?total:"—";
+  var modelosVal=modelos!==null&&modelos!==undefined?modelos:"—";
+  var pctOnline=(total&&online)?Math.round((online/total)*100):null;
+  var pctOffline=(total&&offline)?Math.round((offline/total)*100):null;
+  var BW=320;
+  var onlineBar=pctOnline!=null?Math.round((pctOnline/100)*BW):0;
+  var offlineBar=pctOffline!=null?Math.round((pctOffline/100)*BW):0;
+  var graficaModelos=modelosArr&&modelosArr.length>0?generarSvgBarrasModelos(modelosArr,"Encendidos vs Apagados por modelo — "+periodo):"";
+  var analisisHtml=analisis?'<p style="line-height:1.85;color:#374151;">'+analisis.replace(/\n/g,"<br><br>")+'</p>':'<p style="color:#9ca3af;font-style:italic;">Análisis no disponible.</p>';
 
-  return `<!DOCTYPE html><html lang="es"><head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Informe Flota — ${EMPRESA} — ${fechaStr}</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{--acc:#bbd531;--acc2:#4f8ef7;--dark:#0d0f14;--border:#e5e7eb;--text:#111827;--muted:#6b7280;}
-body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--text);min-height:100vh;}
-.page{max-width:880px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 40px rgba(0,0,0,.08);}
-.rh{background:var(--dark);padding:36px 48px 32px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;}
-.hl{display:flex;flex-direction:column;gap:10px;}
-.logo-row{display:flex;align-items:center;gap:12px;}
-.logo-ico{width:44px;height:44px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-.emp{font-size:20px;font-weight:700;color:#fff;}
-.emp-sub{font-size:12px;color:#9ca3af;}
-.rt{font-size:28px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1.2;}
-.rs{font-size:14px;color:#9ca3af;margin-top:4px;}
-.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(187,213,49,.15);border:1px solid rgba(187,213,49,.3);border-radius:20px;padding:4px 12px;margin-top:12px;font-size:11px;color:var(--acc);font-weight:600;}
-.hr{text-align:right;flex-shrink:0;}
-.dl{color:#e8eaf0;}
-.dlabel{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:2px;}
-.dval{font-size:15px;font-weight:600;}
-.dsub{font-size:12px;color:#9ca3af;margin-top:4px;}
-.accent-bar{height:4px;background:linear-gradient(90deg,var(--acc) 0%,var(--acc2) 100%);}
-.rb{padding:40px 48px;display:flex;flex-direction:column;gap:36px;}
-.stitle{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--acc2);border-left:3px solid var(--acc);padding-left:10px;margin-bottom:16px;}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
-.kpi{background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;position:relative;overflow:hidden;}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
-.kpi.kt::before{background:var(--acc2)}.kpi.ko::before{background:#22c55e}.kpi.kf::before{background:#ef4444}.kpi.km::before{background:var(--acc)}
-.kpi-ico{font-size:24px;margin-bottom:8px;}
-.kpi-val{font-size:36px;font-weight:700;line-height:1;}
-.kt .kpi-val{color:var(--acc2)}.ko .kpi-val{color:#22c55e}.kf .kpi-val{color:#ef4444}.km .kpi-val{color:var(--acc)}
-.kpi-label{font-size:12px;color:var(--muted);margin-top:6px;font-weight:500;}
-.kpi-pct{font-size:11px;color:var(--muted);margin-top:2px;}
-.chart-wrap{background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:24px;}
-.chart-ttl{font-size:13px;font-weight:600;color:#374151;margin-bottom:20px;}
-.bar-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
-.bar-lbl{width:110px;font-size:12px;color:#374151;font-weight:500;flex-shrink:0;text-align:right;}
-.bar-track{flex:1;background:#e5e7eb;border-radius:6px;height:28px;overflow:hidden;position:relative;}
-.bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;}
-.bf-on{background:linear-gradient(90deg,#16a34a,#22c55e);}
-.bf-off{background:linear-gradient(90deg,#b91c1c,#ef4444);}
-.bar-txt{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;}
-.bar-pct{font-size:11px;color:var(--muted);margin-left:8px;white-space:nowrap;}
-.legend{display:flex;gap:20px;margin-top:16px;}
-.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
-.leg-dot{width:10px;height:10px;border-radius:50%;}
-.data-table{width:100%;border-collapse:collapse;font-size:13px;}
-.data-table th{background:var(--dark);color:#e8eaf0;padding:10px 14px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.3px;}
-.data-table th:first-child{border-radius:8px 0 0 0;}.data-table th:last-child{border-radius:0 8px 0 0;}
-.data-table td{padding:9px 14px;border-bottom:1px solid var(--border);color:#374151;}
-.data-table tr:last-child td{border-bottom:none;}
-.data-table tr:nth-child(even) td{background:#f9fafb;}
-.data-table tr:hover td{background:#f0fdf4;}
-.analisis-box{background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #d1fae5;border-radius:12px;padding:24px;}
-.ai-badge{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:var(--acc);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:14px;}
-.rf{background:#f9fafb;border-top:1px solid var(--border);padding:20px 48px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);}
-.rf-brand{font-weight:600;color:#374151;}
-@media print{body{background:#fff;}.page{box-shadow:none;}}
-@media(max-width:600px){.rh{padding:24px;flex-direction:column;}.rb{padding:24px;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.rf{padding:16px 24px;flex-direction:column;gap:6px;}}
-</style></head><body><div class="page">
-<div class="rh">
-  <div class="hl">
-    <div class="logo-row"><div class="logo-ico">📡</div><div><div class="emp">${EMPRESA}</div><div class="emp-sub">Gestión de Dispositivos SOTI MobiControl</div></div></div>
-    <div class="rt">Informe Técnico<br>de Flota</div>
-    <div class="rs">${CLIENTE_CONFIG.nombre} — Generado por SofIA</div>
-    <div class="badge">📊 Informe de Flota</div>
-  </div>
-  <div class="hr">
-    <div class="dl"><div class="dlabel">Fecha de generación</div><div class="dval">${fechaStr}</div>
-    <div class="dsub">🕐 ${horaStr} (Colombia)</div><div class="dsub" style="margin-top:8px;">📅 Período: ${periodo}</div></div>
-  </div>
-</div>
-<div class="accent-bar"></div>
-<div class="rb">
-  <div>
-    <div class="stitle">Resumen Ejecutivo</div>
-    <div class="kpi-grid">
-      <div class="kpi kt"><div class="kpi-ico">📱</div><div class="kpi-val">${totalVal}</div><div class="kpi-label">Total Dispositivos</div><div class="kpi-pct">Flota completa</div></div>
-      <div class="kpi ko"><div class="kpi-ico">🟢</div><div class="kpi-val">${onlineVal}</div><div class="kpi-label">En Línea</div><div class="kpi-pct">${pctOnline != null ? pctOnline+"% del total" : "—"}</div></div>
-      <div class="kpi kf"><div class="kpi-ico">🔴</div><div class="kpi-val">${offlineVal}</div><div class="kpi-label">Desconectados</div><div class="kpi-pct">${pctOffline != null ? pctOffline+"% del total" : "—"}</div></div>
-      <div class="kpi km"><div class="kpi-ico">🔢</div><div class="kpi-val">${modelosVal}</div><div class="kpi-label">Modelos Únicos</div><div class="kpi-pct">Tipos de dispositivo</div></div>
-    </div>
-  </div>
-  ${(online != null || offline != null) ? `
-  <div>
-    <div class="stitle">Distribución de Conectividad</div>
-    <div class="chart-wrap">
-      <div class="chart-ttl">Estado de dispositivos — ${periodo}</div>
-      <div class="bar-row"><div class="bar-lbl">En línea</div><div class="bar-track"><div class="bar-fill bf-on" style="width:${onlineBar}px;"><span class="bar-txt">${onlineVal}</span></div></div><span class="bar-pct">${pctOnline != null ? pctOnline+"%" : ""}</span></div>
-      <div class="bar-row"><div class="bar-lbl">Desconectados</div><div class="bar-track"><div class="bar-fill bf-off" style="width:${offlineBar}px;"><span class="bar-txt">${offlineVal}</span></div></div><span class="bar-pct">${pctOffline != null ? pctOffline+"%" : ""}</span></div>
-      <div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#22c55e;"></div>Dispositivos conectados</div><div class="leg-item"><div class="leg-dot" style="background:#ef4444;"></div>Sin conexión</div></div>
-    </div>
-  </div>` : ""}
-  ${graficaModelos ? `
-  <div>
-    <div class="stitle">Distribución por Modelo</div>
-    ${graficaModelos}
-  </div>` : ""}
-  <div>
-    <div class="stitle">Datos Detallados</div>
-    <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);">${htmlFuente}</div>
-  </div>
-  <div>
-    <div class="stitle">Análisis e Interpretación</div>
-    <div class="analisis-box"><div class="ai-badge">🤖 IA</div><div>${analisisHtml}</div></div>
-  </div>
-</div>
-<div class="rf"><div><span class="rf-brand">${EMPRESA}</span> — Informe generado por SofIA</div><div>🗓️ ${fechaStr} · ${horaStr}</div></div>
-</div></body></html>`;
-}
+  var cssFlota=[
+    ".kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}",
+    ".kpi{background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;position:relative;overflow:hidden;}",
+    ".kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}",
+    ".kpi.kt::before{background:var(--acc2)}.kpi.ko::before{background:#22c55e}.kpi.kf::before{background:#ef4444}.kpi.km::before{background:var(--acc)}",
+    ".kpi-ico{font-size:24px;margin-bottom:8px;}.kpi-val{font-size:36px;font-weight:700;line-height:1;}",
+    ".kt .kpi-val{color:var(--acc2)}.ko .kpi-val{color:#22c55e}.kf .kpi-val{color:#ef4444}.km .kpi-val{color:var(--acc)}",
+    ".kpi-label{font-size:12px;color:var(--muted);margin-top:6px;font-weight:500;}.kpi-pct{font-size:11px;color:var(--muted);margin-top:2px;}",
+    ".chart-wrap{background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:24px;}",
+    ".chart-ttl{font-size:13px;font-weight:600;color:#374151;margin-bottom:20px;}",
+    ".bar-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}",
+    ".bar-lbl{width:110px;font-size:12px;color:#374151;font-weight:500;flex-shrink:0;text-align:right;}",
+    ".bar-track{flex:1;background:#e5e7eb;border-radius:6px;height:28px;overflow:hidden;}",
+    ".bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;}",
+    ".bf-on{background:linear-gradient(90deg,#16a34a,#22c55e);}.bf-off{background:linear-gradient(90deg,#b91c1c,#ef4444);}",
+    ".bar-txt{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;}.bar-pct{font-size:11px;color:var(--muted);margin-left:8px;}",
+    ".legend{display:flex;gap:20px;margin-top:16px;}.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}",
+    ".leg-dot{width:10px;height:10px;border-radius:50%;}"
+  ].join("");
 
-// ════════════════════════════════════════════════════════════════════
-// GENERADOR DE INFORME — DISPOSITIVO
-// ════════════════════════════════════════════════════════════════════
-function generarSvgBateria(puntosBat, titulo) {
-  if (!puntosBat || puntosBat.length < 2) return "";
-
-  const n      = puntosBat.length;
-  const svgW   = 680;
-  const svgH   = 210;
-  const padL   = 46;
-  const padR   = 18;
-  const padT   = 20;
-  const padB   = 52;
-  const chartW = svgW - padL - padR;
-  const chartH = svgH - padT - padB;
-
-  const xScale = i => padL + (i / (n - 1)) * chartW;
-  const yScale = v => padT + chartH - (Math.min(100, Math.max(0, v)) / 100) * chartH;
-
-  const refs = [
-    { v: 80, label: "80%", color: "#22c55e" },
-    { v: 50, label: "50%", color: "#f59e0b" },
-    { v: 20, label: "20%", color: "#ef4444" }
-  ];
-  let refLines = "";
-  refs.forEach(r => {
-    const y = yScale(r.v);
-    refLines += `<line x1="${padL}" y1="${y}" x2="${svgW-padR}" y2="${y}" stroke="${r.color}" stroke-width="1" stroke-dasharray="4,3" opacity="0.45"/>`;
-    refLines += `<text x="${padL-4}" y="${y+4}" text-anchor="end" fill="${r.color}" font-size="9" font-family="Inter,sans-serif" font-weight="600">${r.label}</text>`;
-  });
-
-  const polyPoints = puntosBat.map((p,i) => `${xScale(i)},${yScale(p.bateria)}`).join(" ");
-  const areaPath   = [
-    `M${xScale(0)},${yScale(puntosBat[0].bateria)}`,
-    ...puntosBat.slice(1).map((p,i) => `L${xScale(i+1)},${yScale(p.bateria)}`),
-    `L${xScale(n-1)},${padT+chartH}`,
-    `L${xScale(0)},${padT+chartH}`,
-    "Z"
-  ].join(" ");
-
-  const avgBat    = puntosBat.reduce((s,p) => s + p.bateria, 0) / n;
-  const lineColor = avgBat >= 50 ? "#22c55e" : avgBat >= 20 ? "#f59e0b" : "#ef4444";
-
-  let puntosSvg = "";
-  puntosBat.forEach((p, i) => {
-    const cx  = xScale(i);
-    const cy  = yScale(p.bateria);
-    const col = p.bateria >= 80 ? "#16a34a" : p.bateria >= 50 ? "#d97706" : p.bateria >= 20 ? "#dc2626" : "#7f1d1d";
-    puntosSvg += `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${col}" stroke="white" stroke-width="1.5"><title>${p.fecha}: ${p.bateria}% (${p.nivel})</title></circle>`;
-    if (i === 0 || i === n-1 || i % 4 === 0) {
-      const anchor = i === 0 ? "start" : i === n-1 ? "end" : "middle";
-      puntosSvg += `<text x="${cx}" y="${cy-9}" text-anchor="${anchor}" fill="${col}" font-size="9" font-weight="700" font-family="Inter,sans-serif">${p.bateria}%</text>`;
-    }
-  });
-
-  const xIdxs = [...new Set([0, Math.floor(n/4), Math.floor(n/2), Math.floor(3*n/4), n-1])];
-  let xLabels = "";
-  xIdxs.forEach(i => {
-    const p     = puntosBat[i];
-    if (!p) return;
-    const x     = xScale(i);
-    const short = p.fecha.includes(",") ? p.fecha.split(",")[1].trim() : p.fecha;
-    xLabels += `<text x="${x}" y="${svgH-6}" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter,sans-serif">${short}</text>`;
-  });
-
-  return `
-<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px 20px 16px;overflow-x:auto;">
-  <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;">${titulo}</div>
-  <svg viewBox="0 0 ${svgW} ${svgH}" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;min-width:320px;">
-    <rect x="${padL}" y="${padT}" width="${chartW}" height="${chartH}" fill="white" rx="4" stroke="#f1f5f9" stroke-width="1"/>
-    ${refLines}
-    <path d="${areaPath}" fill="${lineColor}" opacity="0.07"/>
-    <polyline points="${polyPoints}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-    ${puntosSvg}
-    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+chartH}" stroke="#e5e7eb" stroke-width="1"/>
-    <line x1="${padL}" y1="${padT+chartH}" x2="${svgW-padR}" y2="${padT+chartH}" stroke="#e5e7eb" stroke-width="1"/>
-    ${xLabels}
-    <text x="12" y="${padT+chartH/2}" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter,sans-serif" transform="rotate(-90,12,${padT+chartH/2})">BATERÍA %</text>
-  </svg>
-  <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;">
-    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#22c55e;"></div>Alta ≥80%</div>
-    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;"></div>Media 50–79%</div>
-    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444;"></div>Baja 20–49%</div>
-    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#7f1d1d;"></div>Crítica &lt;20%</div>
-    <div style="margin-left:auto;font-size:10px;color:#9ca3af;">${n} registros · Hover para detalles</div>
-  </div>
-</div>`;
-}
-
-function generarInformeDispositivo(datos, htmlFuente, analisis) {
-  const fecha    = new Date();
-  const fechaStr = fecha.toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
-  const horaStr  = fecha.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
-  const { nombre, serial, modelo, fabricante, estado, bateria, negocio, ultimaConex, lat, lng, puntosGPS, puntosBat, puntosRed, puntosTrafico } = datos;
-
-  const conectado = estado && estado.toLowerCase().includes("línea") || estado === "Conectado";
-  const estadoColor = conectado ? "#22c55e" : "#ef4444";
-  const estadoLabel = conectado ? "🟢 En línea" : "🔴 Desconectado";
-
-  const batColor = bateria >= 60 ? "#22c55e" : bateria >= 30 ? "#f59e0b" : "#ef4444";
-  const batIcon  = bateria >= 80 ? "🔋" : bateria >= 50 ? "🔌" : bateria >= 20 ? "⚠️" : "🪴";
-  const batPct   = bateria != null ? bateria : 0;
-  const batStr   = bateria != null ? `${bateria}%` : "N/D";
-
-  const analisisHtml = analisis
-    ? `<p style="line-height:1.85;color:#374151;">${analisis.replace(/\n/g,"<br><br>")}</p>`
-    : `<p style="color:#9ca3af;font-style:italic;">Análisis no disponible.</p>`;
-
-  const seccionBateria = (() => {
-    const bat = puntosBat && puntosBat.length >= 2 ? puntosBat : null;
-    if (!bat) return "";
-    const n=bat.length,svgW=680,svgH=210,padL=46,padR=18,padT=20,padB=52;
-    const chartW=svgW-padL-padR,chartH=svgH-padT-padB;
-    const xS=i=>padL+(i/(n-1))*chartW,yS=v=>padT+chartH-(Math.min(100,Math.max(0,v))/100)*chartH;
-    let refLines="";
-    [{v:80,c:"#22c55e",l:"80%"},{v:50,c:"#f59e0b",l:"50%"},{v:20,c:"#ef4444",l:"20%"}].forEach(r=>{const y=yS(r.v);refLines+='<line x1="'+padL+'" y1="'+y+'" x2="'+(svgW-padR)+'" y2="'+y+'" stroke="'+r.c+'" stroke-width="1" stroke-dasharray="4,3" opacity="0.45"/><text x="'+(padL-4)+'" y="'+(y+4)+'" text-anchor="end" fill="'+r.c+'" font-size="9" font-family="Inter,sans-serif" font-weight="600">'+r.l+'</text>';});
-    const poly=bat.map((p,i)=>xS(i)+","+yS(p.bateria)).join(" ");
-    const area="M"+xS(0)+","+yS(bat[0].bateria)+" "+bat.slice(1).map((p,i)=>"L"+xS(i+1)+","+yS(p.bateria)).join(" ")+" L"+xS(n-1)+","+(padT+chartH)+" L"+xS(0)+","+(padT+chartH)+" Z";
-    const avg=bat.reduce((s,p)=>s+p.bateria,0)/n,lc=avg>=50?"#22c55e":avg>=20?"#f59e0b":"#ef4444";
-    let pts="",xLbls="";
-    bat.forEach((p,i)=>{const cx=xS(i),cy=yS(p.bateria),col=p.bateria>=80?"#16a34a":p.bateria>=50?"#d97706":p.bateria>=20?"#dc2626":"#7f1d1d";pts+='<circle cx="'+cx+'" cy="'+cy+'" r="4.5" fill="'+col+'" stroke="white" stroke-width="1.5"><title>'+p.fecha+': '+p.bateria+'% ('+p.nivel+')</title></circle>';if(i===0||i===n-1||i%4===0){const anc=i===0?"start":i===n-1?"end":"middle";pts+='<text x="'+cx+'" y="'+(cy-9)+'" text-anchor="'+anc+'" fill="'+col+'" font-size="9" font-weight="700" font-family="Inter,sans-serif">'+p.bateria+'%</text>';}});
-    [...new Set([0,Math.floor(n/4),Math.floor(n/2),Math.floor(3*n/4),n-1])].forEach(i=>{const p=bat[i];if(!p)return;const short=p.fecha.includes(",")?p.fecha.split(",")[1].trim():p.fecha;xLbls+='<text x="'+xS(i)+'" y="'+(svgH-6)+'" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter,sans-serif">'+short+'</text>';});
-    return '<div><div class="stitle">Historial de Batería</div>' + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;overflow-x:auto;"><div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;">Evolución del nivel de batería — últimos '+n+' registros</div><svg viewBox="0 0 '+svgW+' '+svgH+'" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;min-width:320px;"><rect x="'+padL+'" y="'+padT+'" width="'+chartW+'" height="'+chartH+'" fill="white" rx="4" stroke="#f1f5f9" stroke-width="1"/>'+refLines+'<path d="'+area+'" fill="'+lc+'" opacity="0.07"/><polyline points="'+poly+'" fill="none" stroke="'+lc+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'+pts+'<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(padT+chartH)+'" stroke="#e5e7eb" stroke-width="1"/><line x1="'+padL+'" y1="'+(padT+chartH)+'" x2="'+(svgW-padR)+'" y2="'+(padT+chartH)+'" stroke="#e5e7eb" stroke-width="1"/>'+xLbls+'<text x="12" y="'+(padT+chartH/2)+'" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter,sans-serif" transform="rotate(-90,12,'+(padT+chartH/2)+')">BATERÍA %</text></svg><div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;"><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#22c55e;"></div>Alta ≥80%</div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;"></div>Media 50–79%</div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444;"></div>Baja 20–49%</div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280;"><div style="width:10px;height:10px;border-radius:50%;background:#7f1d1d;"></div>Crítica &lt;20%</div><div style="margin-left:auto;font-size:10px;color:#9ca3af;">'+n+' registros · Hover para detalles</div></div></div>';
-  })();
-
-  const seccionRed = (() => {
-    const red = puntosRed && puntosRed.length > 0 ? puntosRed : null;
-    if (!red) return "";
-    const n=red.length,validos=red.filter(r=>r.signal_dbm>-127);
-    const wifiCount=red.filter(r=>r.tipo_conexion==="WiFi").length,celCount=n-wifiCount;
-    const avgDbm=validos.length?validos.reduce((s,r)=>s+r.signal_dbm,0)/validos.length:-70;
-    const dbmAvg=validos.length?Math.round(avgDbm):null,lc=avgDbm>=-60?"#22c55e":avgDbm>=-75?"#f59e0b":"#ef4444";
-    let filas="";
-    red.forEach((r,i)=>{const esU=i===n-1,it=r.tipo_conexion==="WiFi"?"📶":"📡",dbm=r.signal_dbm,colS=dbm>=-50?"#16a34a":dbm>=-60?"#22c55e":dbm>=-70?"#84cc16":dbm>=-80?"#f59e0b":dbm>=-90?"#ef4444":"#7f1d1d";filas+="<tr style='"+(esU?"background:#f0fdf4;font-weight:600;":"")+"'><td style='font-size:11px;color:#6b7280;'>"+(i+1)+"</td><td style='font-size:11px;'>"+r.fecha+"</td><td>"+it+" "+r.tipo_conexion+"</td><td style='font-family:monospace;color:"+colS+";font-weight:700;'>"+dbm+" dBm</td><td style='color:"+colS+";font-size:12px;'>"+r.calidad_senal+"</td><td style='font-size:11px;color:#6b7280;'>"+(r.red_wifi||r.operador||"—")+"</td><td style='font-size:11px;color:#6b7280;font-family:monospace;'>"+(r.direccion_ip||"—")+"</td></tr>";});
-    let svgHtml="";
-    if(validos.length>=2){
-      const svgW=680,svgH=200,padL=54,padR=18,padT=20,padB=52,chartW=svgW-padL-padR,chartH=svgH-padT-padB,minV=-100,maxV=-40,nV=validos.length;
-      const xS=i=>padL+(i/(nV-1))*chartW,yS=v=>padT+chartH-((Math.min(maxV,Math.max(minV,v))-minV)/(maxV-minV))*chartH;
-      const bandas=[{from:-50,to:-40,color:"#dcfce7"},{from:-60,to:-50,color:"#d1fae5"},{from:-70,to:-60,color:"#fef9c3"},{from:-80,to:-70,color:"#ffedd5"},{from:-90,to:-80,color:"#fee2e2"},{from:-100,to:-90,color:"#fecaca"}];
-      let bandasSvg="";bandas.forEach(b=>{const y1=yS(b.to),y2=yS(b.from);bandasSvg+="<rect x='"+padL+"' y='"+y1+"' width='"+chartW+"' height='"+(y2-y1)+"' fill='"+b.color+"' opacity='0.5'/><text x='"+(padL-4)+"' y='"+(((y1+y2)/2)+4)+"' text-anchor='end' fill='#9ca3af' font-size='8' font-family='Inter,sans-serif'>"+b.to+"</text>";});
-      const poly=validos.map((r,i)=>xS(i)+","+yS(r.signal_dbm)).join(" ");
-      const area="M"+xS(0)+","+yS(validos[0].signal_dbm)+" "+validos.slice(1).map((r,i)=>"L"+xS(i+1)+","+yS(r.signal_dbm)).join(" ")+" L"+xS(nV-1)+","+(padT+chartH)+" L"+xS(0)+","+(padT+chartH)+" Z";
-      let pts="",xLbls="";
-      validos.forEach((r,i)=>{const cx=xS(i),cy=yS(r.signal_dbm),col=r.signal_dbm>=-50?"#16a34a":r.signal_dbm>=-60?"#22c55e":r.signal_dbm>=-70?"#84cc16":r.signal_dbm>=-80?"#f59e0b":r.signal_dbm>=-90?"#ef4444":"#7f1d1d";pts+="<circle cx='"+cx+"' cy='"+cy+"' r='4' fill='"+col+"' stroke='white' stroke-width='1.5'><title>"+r.fecha+": "+r.signal_dbm+" dBm ("+r.calidad_senal+") · "+r.tipo_conexion+(r.red_wifi?" · "+r.red_wifi:"")+"</title></circle>";if(i===0||i===nV-1||i%4===0)pts+="<text x='"+cx+"' y='"+(cy-9)+"' text-anchor='middle' fill='"+col+"' font-size='9' font-weight='700' font-family='Inter,sans-serif'>"+r.signal_dbm+"</text>";});
-      [...new Set([0,Math.floor(nV/4),Math.floor(nV/2),Math.floor(3*nV/4),nV-1])].forEach(i=>{const r=validos[i];if(!r)return;const short=r.fecha.includes(",")?r.fecha.split(",")[1].trim():r.fecha;xLbls+="<text x='"+xS(i)+"' y='"+(svgH-6)+"' text-anchor='middle' fill='#9ca3af' font-size='9' font-family='Inter,sans-serif'>"+short+"</text>";});
-      svgHtml="<div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px;overflow-x:auto;'><div style='font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;'>Evolución de señal WiFi/Celular (dBm) — últimos "+n+" registros</div><svg viewBox='0 0 "+svgW+" "+svgH+"' width='100%' xmlns='http://www.w3.org/2000/svg' style='display:block;min-width:320px;'><rect x='"+padL+"' y='"+padT+"' width='"+chartW+"' height='"+chartH+"' fill='white' rx='4'/>"+bandasSvg+"<path d='"+area+"' fill='"+lc+"' opacity='0.06'/><polyline points='"+poly+"' fill='none' stroke='"+lc+"' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'/>"+pts+"<line x1='"+padL+"' y1='"+padT+"' x2='"+padL+"' y2='"+(padT+chartH)+"' stroke='#e5e7eb' stroke-width='1'/><line x1='"+padL+"' y1='"+(padT+chartH)+"' x2='"+(svgW-padR)+"' y2='"+(padT+chartH)+"' stroke='#e5e7eb' stroke-width='1'/>"+xLbls+"<text x='12' y='"+(padT+chartH/2)+"' text-anchor='middle' fill='#9ca3af' font-size='9' font-family='Inter,sans-serif' transform='rotate(-90,12,"+(padT+chartH/2)+")'>dBm</text></svg><div style='display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:10px;color:#6b7280;'><span>Excelente ≥−50 🟩</span><span>Buena −61 a −70 🟨</span><span>Regular −71 a −80 🟧</span><span>Mala ≤−81 🟥</span></div></div>";
-    }
-    return "<div><div class=\"stitle\">Historial de Conectividad</div>" + "<div style='display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;'><div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid #4f8ef7;'><div style='font-size:22px;font-weight:700;color:#4f8ef7;'>"+wifiCount+"</div><div style='font-size:11px;color:#6b7280;margin-top:4px;'>📶 Registros WiFi</div></div><div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid #8b5cf6;'><div style='font-size:22px;font-weight:700;color:#8b5cf6;'>"+celCount+"</div><div style='font-size:11px;color:#6b7280;margin-top:4px;'>📡 Registros Celular</div></div><div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid "+lc+";'><div style='font-size:22px;font-weight:700;color:"+lc+";'>"+(dbmAvg!==null?dbmAvg+" dBm":"—")+"</div><div style='font-size:11px;color:#6b7280;margin-top:4px;'>📊 Señal promedio</div></div></div>"+svgHtml+"<div style='overflow-x:auto;border-radius:8px;border:1px solid #e5e7eb;'><table style='width:100%;border-collapse:collapse;font-size:12px;'><thead><tr style='background:#0d0f14;color:#e8eaf0;'><th style='padding:8px 10px;text-align:left;border-radius:8px 0 0 0;'>#</th><th style='padding:8px 10px;text-align:left;'>Fecha y hora</th><th style='padding:8px 10px;text-align:left;'>Tipo</th><th style='padding:8px 10px;text-align:left;'>Señal (dBm)</th><th style='padding:8px 10px;text-align:left;'>Calidad</th><th style='padding:8px 10px;text-align:left;'>Red / Operador</th><th style='padding:8px 10px;text-align:left;border-radius:0 8px 0 0;'>IP</th></tr></thead><tbody>"+filas+"</tbody></table></div>";
-  })();
-
-  const tablaGPS = puntosGPS.length > 0 ? `
-<table class="data-table" style="margin-top:0;">
-<thead><tr><th>#</th><th>Fecha y hora</th><th>Latitud</th><th>Longitud</th></tr></thead>
-<tbody>
-${puntosGPS.map((p,i)=>`<tr style="${i===0?'background:#f0fdf4;':''}">\n<td><b>${p.num||i+1}</b></td>\n<td>${p.fecha||'N/D'}${i===0?' <span style="font-size:10px;color:#22c55e;font-weight:700;">● último</span>':''}</td>\n<td>${typeof p.lat==='number'?p.lat.toFixed(6):p.lat}</td>\n<td>${typeof p.lng==='number'?p.lng.toFixed(6):p.lng}</td>\n</tr>`).join('')}
-</tbody></table>
-<p style="font-size:11px;color:#6b7280;margin-top:8px;">Mostrando ${puntosGPS.length} registros GPS del mes en curso</p>` : `<p style="color:#9ca3af;font-size:13px;">Sin registros GPS disponibles para este dispositivo.</p>`;
-
-  const leafletScript = (lat && lng) ? `
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
-<script>
-window.addEventListener('load', function() {
-  var puntos = ${JSON.stringify(puntosGPS.length > 0 ? puntosGPS : [{lat,lng,fecha:'Último registro',num:1}])};
-  var map = L.map('mapa-informe').setView([puntos[0].lat, puntos[0].lng], 15);
-  L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{attribution:'© Google Maps',maxZoom:20}).addTo(map);
-  if (puntos.length > 1) {
-    var ll = puntos.map(function(p){return [p.lat,p.lng];});
-    L.polyline(ll,{color:'#bbd531',weight:2,opacity:.6,dashArray:'5,5'}).addTo(map);
-    L.polyline(ll,{color:'#ef4444',weight:3,opacity:.8,dashArray:'6,4'}).addTo(map);
-    map.fitBounds(L.latLngBounds(ll),{padding:[30,30]});
+  var distribHtml="";
+  if(online!=null||offline!=null){
+    distribHtml='<div><div class="stitle">Distribución de Conectividad</div>'
+      +'<div class="chart-wrap"><div class="chart-ttl">Estado de dispositivos — '+periodo+'</div>'
+      +'<div class="bar-row"><div class="bar-lbl">En línea</div><div class="bar-track"><div class="bar-fill bf-on" style="width:'+onlineBar+'px;"><span class="bar-txt">'+onlineVal+'</span></div></div><span class="bar-pct">'+(pctOnline!=null?pctOnline+"%":"")+'</span></div>'
+      +'<div class="bar-row"><div class="bar-lbl">Desconectados</div><div class="bar-track"><div class="bar-fill bf-off" style="width:'+offlineBar+'px;"><span class="bar-txt">'+offlineVal+'</span></div></div><span class="bar-pct">'+(pctOffline!=null?pctOffline+"%":"")+'</span></div>'
+      +'<div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#22c55e;"></div>Conectados</div><div class="leg-item"><div class="leg-dot" style="background:#ef4444;"></div>Sin conexión</div></div>'
+      +'</div></div>';
   }
-  var iconoUltimo = L.divIcon({className:'',html:'<div style="background:#bbd531;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(187,213,49,.8);"></div>',iconSize:[14,14],iconAnchor:[7,7]});
-  var iconoNormal = L.divIcon({className:'',html:'<div style="background:#4f8ef7;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:.8;"></div>',iconSize:[9,9],iconAnchor:[4,4]});
-  puntos.forEach(function(p,i){
-    var m = L.marker([p.lat,p.lng],{icon:i===0?iconoUltimo:iconoNormal}).addTo(map);
-    m.bindPopup('<b>'+(i===0?'🟢 Último punto':'Punto '+p.num)+'</b><br>📅 '+p.fecha+'<br>📍 '+p.lat.toFixed(6)+', '+p.lng.toFixed(6)+'<br><a href="https://www.google.com/maps?q='+p.lat+','+p.lng+'" target="_blank" style="color:#4285F4;">Ver en Google Maps</a>');
-    if(i===0) m.openPopup();
-  });
-});
-<\/script>` : "";
 
-  const googleMapsUrl = (lat && lng) ? `https://www.google.com/maps?q=${lat},${lng}` : null;
+  return '<!DOCTYPE html><html lang="es"><head>'
+    +'<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>'
+    +'<title>Informe Flota — '+EMPRESA+' — '+fechaStr+'</title>'
+    +FONTS_LINK
+    +'<style>'+CSS_INFORME_BASE+cssFlota+'</style>'
+    +'</head><body><div class="page">'
+    +'<div class="rh"><div class="hl">'
+    +'<div class="logo-row"><div class="logo-ico">📡</div><div><div class="emp">'+EMPRESA+'</div><div class="emp-sub">Gestión de Dispositivos SOTI MobiControl</div></div></div>'
+    +'<div class="rt">Informe Técnico<br>de Flota</div>'
+    +'<div class="rs">'+CLIENTE_CONFIG.nombre+' — Generado por SofIA</div>'
+    +'<div class="badge">📊 Informe de Flota</div>'
+    +'</div>'
+    +'<div class="hr"><div class="dlabel">Fecha de generación</div><div class="dval">'+fechaStr+'</div>'
+    +'<div class="dsub">🕐 '+horaStr+' (Colombia)</div><div class="dsub" style="margin-top:8px;">📅 Período: '+periodo+'</div></div>'
+    +'</div>'
+    +'<div class="accent-bar"></div>'
+    +'<div class="rb">'
+    +'<div><div class="stitle">Resumen Ejecutivo</div>'
+    +'<div class="kpi-grid">'
+    +'<div class="kpi kt"><div class="kpi-ico">📱</div><div class="kpi-val">'+totalVal+'</div><div class="kpi-label">Total Dispositivos</div><div class="kpi-pct">Flota completa</div></div>'
+    +'<div class="kpi ko"><div class="kpi-ico">🟢</div><div class="kpi-val">'+onlineVal+'</div><div class="kpi-label">En Línea</div><div class="kpi-pct">'+(pctOnline!=null?pctOnline+"% del total":"—")+'</div></div>'
+    +'<div class="kpi kf"><div class="kpi-ico">🔴</div><div class="kpi-val">'+offlineVal+'</div><div class="kpi-label">Desconectados</div><div class="kpi-pct">'+(pctOffline!=null?pctOffline+"% del total":"—")+'</div></div>'
+    +'<div class="kpi km"><div class="kpi-ico">🔢</div><div class="kpi-val">'+modelosVal+'</div><div class="kpi-label">Modelos Únicos</div><div class="kpi-pct">Tipos de dispositivo</div></div>'
+    +'</div></div>'
+    +distribHtml
+    +(graficaModelos?'<div><div class="stitle">Distribución por Modelo</div>'+graficaModelos+'</div>':"")
+    +'<div><div class="stitle">Datos Detallados</div><div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);">'+htmlFuente+'</div></div>'
+    +'<div><div class="stitle">Análisis e Interpretación</div><div class="analisis-box"><div class="ai-badge">🤖 IA</div><div>'+analisisHtml+'</div></div></div>'
+    +'</div>'
+    +'<div class="rf"><div><span class="rf-brand">'+EMPRESA+'</span> — Informe generado por SofIA</div><div>🗓️ '+fechaStr+' · '+horaStr+'</div></div>'
+    +'</div></body></html>';
+}
 
-  return `<!DOCTYPE html><html lang="es"><head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Informe Dispositivo ${serial} — ${EMPRESA}</title>
-${leafletScript}
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{--acc:#bbd531;--acc2:#4f8ef7;--dark:#0d0f14;--border:#e5e7eb;--text:#111827;--muted:#6b7280;}
-body{font-family:'Inter','Segoe UI',sans-serif;background:#f9fafb;color:var(--text);}
-.page{max-width:880px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 40px rgba(0,0,0,.08);}
-.rh{background:var(--dark);padding:36px 48px 32px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;}
-.hl{display:flex;flex-direction:column;gap:10px;}
-.logo-row{display:flex;align-items:center;gap:12px;}
-.logo-ico{width:44px;height:44px;background:var(--acc);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
-.emp{font-size:20px;font-weight:700;color:#fff;} .emp-sub{font-size:12px;color:#9ca3af;}
-.rt{font-size:26px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1.2;}
-.rs{font-size:13px;color:#9ca3af;margin-top:4px;}
-.badge{display:inline-flex;align-items:center;gap:6px;background:rgba(187,213,49,.15);border:1px solid rgba(187,213,49,.3);border-radius:20px;padding:4px 12px;margin-top:10px;font-size:11px;color:var(--acc);font-weight:600;}
-.hr{text-align:right;flex-shrink:0;color:#e8eaf0;}
-.dlabel{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:2px;}
-.dval{font-size:14px;font-weight:600;} .dsub{font-size:12px;color:#9ca3af;margin-top:4px;}
-.accent-bar{height:4px;background:linear-gradient(90deg,var(--acc),var(--acc2));}
-.rb{padding:36px 48px;display:flex;flex-direction:column;gap:32px;}
-.stitle{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--acc2);border-left:3px solid var(--acc);padding-left:10px;margin-bottom:16px;}
-.ficha-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.ficha-card{background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:20px;}
-.ficha-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px;}
-.ficha-val{font-size:16px;font-weight:700;color:var(--text);}
-.ficha-sub{font-size:12px;color:var(--muted);margin-top:3px;}
-.estado-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;}
-.bat-wrap{display:flex;align-items:center;gap:12px;margin-top:8px;}
-.bat-track{flex:1;background:#e5e7eb;border-radius:8px;height:16px;overflow:hidden;}
-.bat-fill{height:100%;border-radius:8px;transition:width .6s;}
-.bat-pct{font-size:22px;font-weight:800;min-width:54px;text-align:right;}
-.serial-box{background:var(--dark);border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.serial-code{font-family:'Courier New',monospace;font-size:18px;font-weight:700;color:var(--acc);letter-spacing:1px;}
-.serial-label{font-size:11px;color:#6b7280;margin-top:2px;}
-.mapa-wrap{border-radius:12px;overflow:hidden;border:1px solid var(--border);}
-#mapa-informe{height:380px;width:100%;}
-.map-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 16px;background:#4285F4;color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;}
-.data-table{width:100%;border-collapse:collapse;font-size:13px;}
-.data-table th{background:var(--dark);color:#e8eaf0;padding:10px 14px;text-align:left;font-weight:600;font-size:12px;}
-.data-table th:first-child{border-radius:8px 0 0 0;}.data-table th:last-child{border-radius:0 8px 0 0;}
-.data-table td{padding:9px 14px;border-bottom:1px solid var(--border);color:#374151;}
-.data-table tr:last-child td{border-bottom:none;}
-.data-table tr:nth-child(even) td{background:#f9fafb;}
-.analisis-box{background:linear-gradient(135deg,#f0fdf4,#eff6ff);border:1px solid #d1fae5;border-radius:12px;padding:24px;}
-.ai-badge{display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:var(--acc);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:14px;}
-.rf{background:#f9fafb;border-top:1px solid var(--border);padding:20px 48px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);}
-.rf-brand{font-weight:600;color:#374151;}
-@media print{body{background:#fff;}.page{box-shadow:none;}#mapa-informe{height:300px;}}
-@media(max-width:600px){.rh{padding:24px;flex-direction:column;}.rb{padding:24px;}.ficha-grid{grid-template-columns:1fr;}.rf{padding:16px;flex-direction:column;gap:6px;}}
-</style></head><body><div class="page">
+// ════════════════════════════════════════════════════════════════════
+// GENERADOR INFORME DISPOSITIVO
+// ════════════════════════════════════════════════════════════════════
+function generarInformeDispositivo(datos, htmlFuente, analisis) {
+  var fecha=new Date();
+  var fechaStr=fecha.toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
+  var horaStr=fecha.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
+  var nombre=datos.nombre, serial=datos.serial, modelo=datos.modelo, fabricante=datos.fabricante;
+  var estado=datos.estado, bateria=datos.bateria, negocio=datos.negocio, ultimaConex=datos.ultimaConex;
+  var lat=datos.lat, lng=datos.lng, puntosGPS=datos.puntosGPS||[], puntosBat=datos.puntosBat||[];
+  var puntosRed=datos.puntosRed||[], puntosTrafico=datos.puntosTrafico||[], storage=datos.storage||null;
 
-<div class="rh">
-  <div class="hl">
-    <div class="logo-row"><div class="logo-ico">📱</div><div><div class="emp">${EMPRESA}</div><div class="emp-sub">Gestión de Dispositivos SOTI MobiControl</div></div></div>
-    <div class="rt">Informe Técnico<br>de Dispositivo</div>
-    <div class="rs">${CLIENTE_CONFIG.nombre} — Generado por SofIA</div>
-    <div class="badge">📍 Informe Individual</div>
-  </div>
-  <div class="hr">
-    <div class="dlabel">Fecha de generación</div><div class="dval">${fechaStr}</div>
-    <div class="dsub">🕐 ${horaStr} (Colombia)</div>
-    <div class="dsub" style="margin-top:10px;">
-      <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:${conectado?'rgba(34,197,94,.15)':'rgba(239,68,68,.15)'};color:${estadoColor};font-weight:700;font-size:13px;">${estadoLabel}</span>
-    </div>
-  </div>
-</div>
-<div class="accent-bar"></div>
+  var conectado=(estado&&estado.toLowerCase().includes("línea"))||estado==="Conectado";
+  var estadoColor=conectado?"#22c55e":"#ef4444";
+  var estadoLabel=conectado?"🟢 En línea":"🔴 Desconectado";
+  var batColor=bateria>=60?"#22c55e":bateria>=30?"#f59e0b":"#ef4444";
+  var batIcon=bateria>=80?"🔋":bateria>=50?"🔌":bateria>=20?"⚠️":"🪴";
+  var batPct=bateria!=null?bateria:0;
+  var batStr=bateria!=null?bateria+"%":"N/D";
+  var analisisHtml=analisis?'<p style="line-height:1.85;color:#374151;">'+analisis.replace(/\n/g,"<br><br>")+'</p>':'<p style="color:#9ca3af;font-style:italic;">Análisis no disponible.</p>';
+  var googleMapsUrl=(lat&&lng)?"https://www.google.com/maps?q="+lat+","+lng:null;
 
-<div class="rb">
-  <div>
-    <div class="stitle">Identificación del Dispositivo</div>
-    <div class="serial-box">
-      <div><div class="serial-label">Número de Serial</div><div class="serial-code">${serial}</div></div>
-      <div style="text-align:right;color:#9ca3af;">
-        <div style="font-size:14px;font-weight:600;color:#e8eaf0;">${modelo}</div>
-        <div style="font-size:12px;margin-top:2px;">${fabricante}</div>
-      </div>
-    </div>
-  </div>
+  // ── Storage ──
+  var seccionStorage="";
+  if(storage){
+    var sp=storage.pct||0,sc=sp>=90?"#ef4444":sp>=70?"#f59e0b":"#22c55e";
+    var si=sp>=90?"🔴":sp>=70?"🟠":"🟢";
+    var sgf=sp>=90?"#b91c1c":sp>=70?"#b45309":"#16a34a";
+    var sgt=sp>=90?"#ef4444":sp>=70?"#f59e0b":"#22c55e";
+    var scu=sp>=90?"#ef4444":"#f59e0b";
+    seccionStorage='<div><div class="stitle">Almacenamiento Interno</div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:24px;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">'
+      +'<span style="font-size:15px;font-weight:700;color:#111827;">'+si+' <b>'+storage.usadoGB+' GB</b> usados de <b>'+storage.totalGB+' GB</b></span>'
+      +'<span style="font-size:28px;font-weight:800;color:'+sc+';">'+sp+'%</span></div>'
+      +'<div style="height:20px;background:#e5e7eb;border-radius:10px;overflow:hidden;">'
+      +'<div style="height:100%;width:'+sp+'%;background:linear-gradient(90deg,'+sgf+','+sgt+');border-radius:10px;"></div></div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;">'
+      +'<div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#4f8ef7;">'+storage.totalGB+' GB</div><div style="font-size:11px;color:#6b7280;margin-top:2px;">💽 Capacidad total</div></div>'
+      +'<div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;color:'+scu+';">'+storage.usadoGB+' GB</div><div style="font-size:11px;color:#6b7280;margin-top:2px;">📦 Usado</div></div>'
+      +'<div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;color:#22c55e;">'+storage.dispGB+' GB</div><div style="font-size:11px;color:#6b7280;margin-top:2px;">✅ Disponible</div></div>'
+      +'</div></div></div>';
+  }
 
-  <div>
-    <div class="stitle">Ficha Técnica</div>
-    <div class="ficha-grid">
-      <div class="ficha-card">
-        <div class="ficha-label">Estado de Conexión</div>
-        <div class="ficha-val">
-          <span class="estado-badge" style="background:${conectado?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)'};color:${estadoColor};">${estadoLabel}</span>
-        </div>
-        <div class="ficha-sub">Última conexión: ${ultimaConex}</div>
-      </div>
-      <div class="ficha-card">
-        <div class="ficha-label">Nivel de Batería</div>
-        <div class="bat-wrap">
-          <div class="bat-track"><div class="bat-fill" style="width:${batPct}%;background:${batColor};"></div></div>
-          <span class="bat-pct" style="color:${batColor};">${batIcon} ${batStr}</span>
-        </div>
-        <div class="ficha-sub" style="margin-top:8px;">Estado energético del dispositivo</div>
-      </div>
-      <div class="ficha-card">
-        <div class="ficha-label">Modelo y Fabricante</div>
-        <div class="ficha-val">${modelo}</div>
-        <div class="ficha-sub">${fabricante}</div>
-      </div>
-      <div class="ficha-card">
-        <div class="ficha-label">Negocio / Regional</div>
-        <div class="ficha-val" style="font-size:13px;line-height:1.4;">${negocio}</div>
-      </div>
-    </div>
-  </div>
+  // ── Batería histórica ──
+  var seccionBateria="";
+  if(puntosBat&&puntosBat.length>=2){
+    var bat=puntosBat,n=bat.length,svgW=680,svgH=210,padL=46,padR=18,padT=20,padB=52;
+    var chartW=svgW-padL-padR,chartH=svgH-padT-padB;
+    var xS=function(i){return padL+(i/(n-1))*chartW;};
+    var yS=function(v){return padT+chartH-(Math.min(100,Math.max(0,v))/100)*chartH;};
+    var refLines="";
+    [{v:80,c:"#22c55e",l:"80%"},{v:50,c:"#f59e0b",l:"50%"},{v:20,c:"#ef4444",l:"20%"}].forEach(function(r){var y=yS(r.v);refLines+='<line x1="'+padL+'" y1="'+y+'" x2="'+(svgW-padR)+'" y2="'+y+'" stroke="'+r.c+'" stroke-width="1" stroke-dasharray="4,3" opacity="0.45"/><text x="'+(padL-4)+'" y="'+(y+4)+'" text-anchor="end" fill="'+r.c+'" font-size="9" font-family="Inter,sans-serif" font-weight="600">'+r.l+'</text>';});
+    var poly=bat.map(function(p,i){return xS(i)+","+yS(p.bateria);}).join(" ");
+    var area="M"+xS(0)+","+yS(bat[0].bateria)+" "+bat.slice(1).map(function(p,i){return "L"+xS(i+1)+","+yS(p.bateria);}).join(" ")+" L"+xS(n-1)+","+(padT+chartH)+" L"+xS(0)+","+(padT+chartH)+" Z";
+    var avg=bat.reduce(function(s,p){return s+p.bateria;},0)/n,lc=avg>=50?"#22c55e":avg>=20?"#f59e0b":"#ef4444";
+    var pts="",xLbls="";
+    bat.forEach(function(p,i){var cx=xS(i),cy=yS(p.bateria),col=p.bateria>=80?"#16a34a":p.bateria>=50?"#d97706":p.bateria>=20?"#dc2626":"#7f1d1d";pts+='<circle cx="'+cx+'" cy="'+cy+'" r="4.5" fill="'+col+'" stroke="white" stroke-width="1.5"><title>'+p.fecha+': '+p.bateria+'% ('+p.nivel+')</title></circle>';if(i===0||i===n-1||i%4===0){var anc=i===0?"start":i===n-1?"end":"middle";pts+='<text x="'+cx+'" y="'+(cy-9)+'" text-anchor="'+anc+'" fill="'+col+'" font-size="9" font-weight="700" font-family="Inter,sans-serif">'+p.bateria+'%</text>';}});
+    [0,Math.floor(n/4),Math.floor(n/2),Math.floor(3*n/4),n-1].filter(function(v,i,a){return a.indexOf(v)===i;}).forEach(function(i){var p=bat[i];if(!p)return;var short=p.fecha.includes(",")?p.fecha.split(",")[1].trim():p.fecha;xLbls+='<text x="'+xS(i)+'" y="'+(svgH-6)+'" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter,sans-serif">'+short+'</text>';});
+    seccionBateria='<div><div class="stitle">Historial de Batería</div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;overflow-x:auto;">'
+      +'<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;">Evolución del nivel de batería — últimos '+n+' registros</div>'
+      +'<svg viewBox="0 0 '+svgW+' '+svgH+'" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;min-width:320px;">'
+      +'<rect x="'+padL+'" y="'+padT+'" width="'+chartW+'" height="'+chartH+'" fill="white" rx="4" stroke="#f1f5f9" stroke-width="1"/>'
+      +refLines+'<path d="'+area+'" fill="'+lc+'" opacity="0.07"/>'
+      +'<polyline points="'+poly+'" fill="none" stroke="'+lc+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
+      +pts
+      +'<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(padT+chartH)+'" stroke="#e5e7eb" stroke-width="1"/>'
+      +'<line x1="'+padL+'" y1="'+(padT+chartH)+'" x2="'+(svgW-padR)+'" y2="'+(padT+chartH)+'" stroke="#e5e7eb" stroke-width="1"/>'
+      +xLbls
+      +'<text x="12" y="'+(padT+chartH/2)+'" text-anchor="middle" fill="#9ca3af" font-size="9" font-family="Inter,sans-serif" transform="rotate(-90,12,'+(padT+chartH/2)+')">BATERÍA %</text>'
+      +'</svg></div></div>';
+  }
 
-  ${(lat && lng) ? `
-  <div>
-    <div class="stitle">Ubicación y Recorrido GPS</div>
-    <div class="mapa-wrap"><div id="mapa-informe"></div></div>
-    ${googleMapsUrl ? `<a class="map-link" href="${googleMapsUrl}" target="_blank">🗺️ Abrir último punto en Google Maps</a>` : ""}
-  </div>
+  // ── Red ──
+  var seccionRed="";
+  if(puntosRed&&puntosRed.length>0){
+    var red=puntosRed,rn=red.length,validos=red.filter(function(r){return r.signal_dbm>-127;});
+    var wifiCount=red.filter(function(r){return r.tipo_conexion==="WiFi";}).length,celCount=rn-wifiCount;
+    var avgDbm=validos.length?validos.reduce(function(s,r){return s+r.signal_dbm;},0)/validos.length:-70;
+    var dbmAvg=validos.length?Math.round(avgDbm):null,lc2=avgDbm>=-60?"#22c55e":avgDbm>=-75?"#f59e0b":"#ef4444";
+    var filas2="";
+    red.forEach(function(r,i){var esU=i===rn-1,it=r.tipo_conexion==="WiFi"?"📶":"📡",dbm=r.signal_dbm,colS=dbm>=-50?"#16a34a":dbm>=-60?"#22c55e":dbm>=-70?"#84cc16":dbm>=-80?"#f59e0b":dbm>=-90?"#ef4444":"#7f1d1d";filas2+="<tr style='"+(esU?"background:#f0fdf4;font-weight:600;":"")+"'><td style='font-size:11px;color:#6b7280;'>"+(i+1)+"</td><td style='font-size:11px;'>"+r.fecha+"</td><td>"+it+" "+r.tipo_conexion+"</td><td style='font-family:monospace;color:"+colS+";font-weight:700;'>"+dbm+" dBm</td><td style='color:"+colS+";font-size:12px;'>"+r.calidad_senal+"</td><td style='font-size:11px;color:#6b7280;'>"+(r.red_wifi||r.operador||"—")+"</td><td style='font-size:11px;color:#6b7280;font-family:monospace;'>"+(r.direccion_ip||"—")+"</td></tr>";});
+    seccionRed='<div><div class="stitle">Historial de Conectividad</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid #4f8ef7;"><div style="font-size:22px;font-weight:700;color:#4f8ef7;">'+wifiCount+'</div><div style="font-size:11px;color:#6b7280;margin-top:4px;">📶 WiFi</div></div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid #8b5cf6;"><div style="font-size:22px;font-weight:700;color:#8b5cf6;">'+celCount+'</div><div style="font-size:11px;color:#6b7280;margin-top:4px;">📡 Celular</div></div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;border-top:3px solid '+lc2+';"><div style="font-size:22px;font-weight:700;color:'+lc2+';">'+(dbmAvg!==null?dbmAvg+" dBm":"—")+'</div><div style="font-size:11px;color:#6b7280;margin-top:4px;">📊 Señal prom.</div></div>'
+      +'</div>'
+      +'<div style="overflow-x:auto;border-radius:8px;border:1px solid #e5e7eb;">'
+      +'<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#0d0f14;color:#e8eaf0;">'
+      +'<th style="padding:8px 10px;border-radius:8px 0 0 0;">#</th><th style="padding:8px 10px;">Fecha</th><th style="padding:8px 10px;">Tipo</th><th style="padding:8px 10px;">Señal</th><th style="padding:8px 10px;">Calidad</th><th style="padding:8px 10px;">Red/Op.</th><th style="padding:8px 10px;border-radius:0 8px 0 0;">IP</th>'
+      +'</tr></thead><tbody>'+filas2+'</tbody></table></div></div>';
+  }
 
-  <div>
-    <div class="stitle">Historial de Puntos GPS</div>
-    <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);">
-      ${tablaGPS}
-    </div>
-  </div>` : `
-  <div>
-    <div class="stitle">Ubicación GPS</div>
-    <div style="background:#fef9c3;border:1px solid #fde047;border-radius:12px;padding:20px;color:#854d0e;font-size:13px;">
-      ⚠️ No se encontraron coordenadas GPS para este dispositivo en el período consultado.
-    </div>
-  </div>`}
-
-  ${(() => {
-    const metricas = parsearMetricasFlota(htmlFuente || "");
-    if (metricas.modelosArr && metricas.modelosArr.length > 1) {
-      return `<div>
-    <div class="stitle">Distribución por Modelo en el Grupo</div>
-    ${generarSvgBarrasModelos(metricas.modelosArr, "Encendidos vs Apagados — modelos del grupo")}
-  </div>`;
-    }
-    if (modelo && modelo !== "N/D") {
-      const on  = conectado ? 1 : 0;
-      const off = conectado ? 0 : 1;
-      const miniData = [{ nombre: modelo, on, off, total: 1 }];
-      return `<div>
-    <div class="stitle">Estado del Modelo</div>
-    ${generarSvgBarrasModelos(miniData, `Estado actual — ${modelo}`)}
-  </div>`;
-    }
-    return "";
-  })()}
-
-  ${seccionBateria}
-  ${seccionRed}
-
-  ${(() => {
-    const trafico = puntosTrafico && puntosTrafico.length > 0 ? puntosTrafico : null;
-    if (!trafico) return "";
-    const totalUpMB   = trafico.reduce((s,r) => s + (r.uploadMB   || 0), 0);
-    const totalDownMB = trafico.reduce((s,r) => s + (r.downloadMB || 0), 0);
-    const totalMB     = trafico.reduce((s,r) => s + (r.totalMB    || 0), 0);
-    const maxMB       = Math.max(...trafico.map(r => r.totalMB || 0), 1);
-    const formatMB = mb => mb >= 1000 ? (mb/1024).toFixed(1)+' GB' : mb.toFixed(0)+' MB';
-    const colBar   = mb => mb >= 100 ? '#ef4444' : mb >= 50 ? '#f59e0b' : '#22c55e';
-    const filas = trafico.map((r, i) => {
-      const pct  = Math.round((r.totalMB / maxMB) * 100);
-      const col  = colBar(r.totalMB);
-      const tipo = r.tipoConexion === 'WiFi' ? '📶' : '📡';
+  // ── Tráfico ──
+  var seccionTrafico="";
+  if(puntosTrafico&&puntosTrafico.length>0){
+    var tr=puntosTrafico;
+    var totalUpMB=tr.reduce(function(s,r){return s+(r.uploadMB||0);},0);
+    var totalDownMB=tr.reduce(function(s,r){return s+(r.downloadMB||0);},0);
+    var totalMBT=tr.reduce(function(s,r){return s+(r.totalMB||0);},0);
+    var maxMBT=Math.max.apply(null,tr.map(function(r){return r.totalMB||0;}).concat([1]));
+    var fmtMB=function(mb){return mb>=1000?(mb/1024).toFixed(1)+' GB':mb.toFixed(0)+' MB';};
+    var colBar=function(mb){return mb>=100?'#ef4444':mb>=50?'#f59e0b':'#22c55e';};
+    var filasT=tr.map(function(r,i){
+      var pct=Math.round((r.totalMB/maxMBT)*100),col=colBar(r.totalMB),tipo=r.tipoConexion==='WiFi'?'📶':'📡';
       return '<tr style="'+(i%2===0?'':'background:#f9fafb;')+'">'
         +'<td style="padding:8px 12px;font-weight:600;color:#111827;">'+tipo+' '+(r.aplicacion||'Desconocida')+'</td>'
         +'<td style="padding:8px 12px;font-size:12px;color:#6b7280;">'+(r.tipoConexion||'—')+'</td>'
-        +'<td style="padding:8px 12px;"><div style="display:flex;align-items:center;gap:8px;">'
-        +'<div style="flex:1;background:#e5e7eb;border-radius:4px;height:8px;min-width:60px;">'
-        +'<div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px;"></div></div>'
-        +'<span style="font-weight:700;color:'+col+';font-size:12px;min-width:54px;text-align:right;">'+formatMB(r.totalMB)+'</span>'
-        +'</div></td>'
-        +'<td style="padding:8px 12px;font-size:12px;color:#6b7280;text-align:right;">'+formatMB(r.uploadMB||0)+'</td>'
-        +'<td style="padding:8px 12px;font-size:12px;color:#6b7280;text-align:right;">'+formatMB(r.downloadMB||0)+'</td>'
+        +'<td style="padding:8px 12px;"><div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;background:#e5e7eb;border-radius:4px;height:8px;min-width:60px;"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px;"></div></div><span style="font-weight:700;color:'+col+';font-size:12px;min-width:54px;text-align:right;">'+fmtMB(r.totalMB)+'</span></div></td>'
+        +'<td style="padding:8px 12px;font-size:12px;color:#6b7280;text-align:right;">'+fmtMB(r.uploadMB||0)+'</td>'
+        +'<td style="padding:8px 12px;font-size:12px;color:#6b7280;text-align:right;">'+fmtMB(r.downloadMB||0)+'</td>'
         +'<td style="padding:8px 12px;font-size:11px;color:#9ca3af;">'+(r.ultimoRegistro||'—')+'</td>'
         +'</tr>';
     }).join('');
-    return '<div>'
-      +'<div class="stitle">Consumo de Datos por Aplicación</div>'
+    seccionTrafico='<div><div class="stitle">Consumo de Datos por Aplicación</div>'
       +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">'
-      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #4f8ef7;">'
-      +'<div style="font-size:24px;font-weight:700;color:#4f8ef7;">'+formatMB(totalMB)+'</div>'
-      +'<div style="font-size:12px;color:#6b7280;margin-top:4px;">📊 Total consumido</div></div>'
-      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #22c55e;">'
-      +'<div style="font-size:24px;font-weight:700;color:#22c55e;">'+formatMB(totalDownMB)+'</div>'
-      +'<div style="font-size:12px;color:#6b7280;margin-top:4px;">⬇️ Descargado</div></div>'
-      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #f59e0b;">'
-      +'<div style="font-size:24px;font-weight:700;color:#f59e0b;">'+formatMB(totalUpMB)+'</div>'
-      +'<div style="font-size:12px;color:#6b7280;margin-top:4px;">⬆️ Subido</div></div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #4f8ef7;"><div style="font-size:24px;font-weight:700;color:#4f8ef7;">'+fmtMB(totalMBT)+'</div><div style="font-size:12px;color:#6b7280;margin-top:4px;">📊 Total</div></div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #22c55e;"><div style="font-size:24px;font-weight:700;color:#22c55e;">'+fmtMB(totalDownMB)+'</div><div style="font-size:12px;color:#6b7280;margin-top:4px;">⬇️ Bajada</div></div>'
+      +'<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:18px;text-align:center;border-top:3px solid #f59e0b;"><div style="font-size:24px;font-weight:700;color:#f59e0b;">'+fmtMB(totalUpMB)+'</div><div style="font-size:12px;color:#6b7280;margin-top:4px;">⬆️ Subida</div></div>'
       +'</div>'
       +'<div style="overflow-x:auto;border-radius:10px;border:1px solid #e5e7eb;">'
-      +'<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-      +'<thead><tr style="background:#0d0f14;color:#e8eaf0;">'
-      +'<th style="padding:10px 12px;text-align:left;border-radius:8px 0 0 0;font-size:12px;">Aplicación</th>'
-      +'<th style="padding:10px 12px;text-align:left;font-size:12px;">Conexión</th>'
-      +'<th style="padding:10px 12px;text-align:left;font-size:12px;">Total</th>'
-      +'<th style="padding:10px 12px;text-align:right;font-size:12px;">⬆️ Subida</th>'
-      +'<th style="padding:10px 12px;text-align:right;font-size:12px;">⬇️ Bajada</th>'
-      +'<th style="padding:10px 12px;text-align:left;border-radius:0 8px 0 0;font-size:12px;">Últ. registro</th>'
-      +'</tr></thead>'
-      +'<tbody>'+filas+'</tbody></table></div>'
-      +'<p style="font-size:11px;color:#6b7280;margin-top:8px;">Top '+trafico.length+' apps por consumo de datos · ordenadas de mayor a menor</p>'
-      +'</div>';
-  })()}
+      +'<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#0d0f14;color:#e8eaf0;">'
+      +'<th style="padding:10px 12px;border-radius:8px 0 0 0;font-size:12px;">Aplicación</th>'
+      +'<th style="padding:10px 12px;font-size:12px;">Conexión</th>'
+      +'<th style="padding:10px 12px;font-size:12px;">Total</th>'
+      +'<th style="padding:10px 12px;text-align:right;font-size:12px;">⬆️ Sube</th>'
+      +'<th style="padding:10px 12px;text-align:right;font-size:12px;">⬇️ Baja</th>'
+      +'<th style="padding:10px 12px;border-radius:0 8px 0 0;font-size:12px;">Último reg.</th>'
+      +'</tr></thead><tbody>'+filasT+'</tbody></table></div></div>';
+  }
 
-  <div>
-    <div class="stitle">Diagnóstico Técnico</div>
-    <div class="analisis-box"><div class="ai-badge">🤖 IA</div><div>${analisisHtml}</div></div>
-  </div>
+  // ── Tabla GPS ──
+  var tablaGPS=puntosGPS.length>0
+    ?'<table class="data-table" style="margin-top:0;"><thead><tr><th>#</th><th>Fecha y hora</th><th>Latitud</th><th>Longitud</th></tr></thead><tbody>'
+      +puntosGPS.map(function(p,i){return '<tr style="'+(i===0?'background:#f0fdf4;':'')+'">'
+        +'<td><b>'+(p.num||i+1)+'</b></td>'
+        +'<td>'+(p.fecha||'N/D')+(i===0?' <span style="font-size:10px;color:#22c55e;font-weight:700;">● último</span>':'')+'</td>'
+        +'<td>'+(typeof p.lat==='number'?p.lat.toFixed(6):p.lat)+'</td>'
+        +'<td>'+(typeof p.lng==='number'?p.lng.toFixed(6):p.lng)+'</td>'
+        +'</tr>';}).join('')
+      +'</tbody></table><p style="font-size:11px;color:#6b7280;margin-top:8px;">Mostrando '+puntosGPS.length+' registros GPS del mes en curso</p>'
+    :'<p style="color:#9ca3af;font-size:13px;">Sin registros GPS disponibles.</p>';
 
-</div>
-<div class="rf"><div><span class="rf-brand">${EMPRESA}</span> — Informe generado por SofIA</div><div>🗓️ ${fechaStr} · ${horaStr}</div></div>
-</div></body></html>`;
+  // ── Leaflet script para el mapa ──
+  var leafletScript="";
+  if(lat&&lng){
+    var puntosJson=JSON.stringify(puntosGPS.length>0?puntosGPS:[{lat:lat,lng:lng,fecha:"Último registro",num:1}]);
+    leafletScript='<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>'
+      +'<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>'
+      +'<script>window.addEventListener("load",function(){'
+      +'var puntos='+puntosJson+';'
+      +'var map=L.map("mapa-informe").setView([puntos[0].lat,puntos[0].lng],15);'
+      +'L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",{attribution:"© Google Maps",maxZoom:20}).addTo(map);'
+      +'if(puntos.length>1){var ll=puntos.map(function(p){return[p.lat,p.lng];});L.polyline(ll,{color:"#bbd531",weight:2,opacity:.6,dashArray:"5,5"}).addTo(map);L.polyline(ll,{color:"#ef4444",weight:3,opacity:.8,dashArray:"6,4"}).addTo(map);map.fitBounds(L.latLngBounds(ll),{padding:[30,30]});}'
+      +'var iU=L.divIcon({className:"",html:"<div style=\\"background:#bbd531;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(187,213,49,.8);\\"></div>",iconSize:[14,14],iconAnchor:[7,7]});'
+      +'var iN=L.divIcon({className:"",html:"<div style=\\"background:#4f8ef7;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:.8;\\"></div>",iconSize:[9,9],iconAnchor:[4,4]});'
+      +'puntos.forEach(function(p,i){var m=L.marker([p.lat,p.lng],{icon:i===0?iU:iN}).addTo(map);m.bindPopup("<b>"+(i===0?"🟢 Último punto":"Punto "+p.num)+"</b><br>📅 "+p.fecha+"<br>📍 "+p.lat.toFixed(6)+", "+p.lng.toFixed(6)+"<br><a href=\\"https://www.google.com/maps?q="+p.lat+","+p.lng+"\\" target=\\"_blank\\" style=\\"color:#4285F4;\\">Ver en Google Maps</a>");if(i===0)m.openPopup();});'
+      +'});<\/script>';
+  }
+
+  // ── CSS específico dispositivo ──
+  var cssDisp=[
+    ".ficha-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}",
+    ".ficha-card{background:#f9fafb;border:1px solid var(--border);border-radius:12px;padding:20px;}",
+    ".ficha-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px;}",
+    ".ficha-val{font-size:16px;font-weight:700;color:var(--text);}.ficha-sub{font-size:12px;color:var(--muted);margin-top:3px;}",
+    ".estado-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;}",
+    ".bat-wrap{display:flex;align-items:center;gap:12px;margin-top:8px;}",
+    ".bat-track{flex:1;background:#e5e7eb;border-radius:8px;height:16px;overflow:hidden;}",
+    ".bat-fill{height:100%;border-radius:8px;}.bat-pct{font-size:22px;font-weight:800;min-width:54px;text-align:right;}",
+    ".serial-box{background:var(--dark);border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;}",
+    ".serial-code{font-family:'Courier New',monospace;font-size:18px;font-weight:700;color:var(--acc);letter-spacing:1px;}",
+    ".serial-label{font-size:11px;color:#6b7280;margin-top:2px;}",
+    ".mapa-wrap{border-radius:12px;overflow:hidden;border:1px solid var(--border);}",
+    "#mapa-informe{height:380px;width:100%;}",
+    ".map-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 16px;background:#4285F4;color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;}",
+    ".rb{padding:36px 48px;}",
+    "@media(max-width:600px){.ficha-grid{grid-template-columns:1fr;}#mapa-informe{height:300px;}}"
+  ].join("");
+
+  var gpsHtml=lat&&lng
+    ?'<div><div class="stitle">Ubicación y Recorrido GPS</div><div class="mapa-wrap"><div id="mapa-informe"></div></div>'+(googleMapsUrl?'<a class="map-link" href="'+googleMapsUrl+'" target="_blank">🗺️ Abrir en Google Maps</a>':'')+'</div>'
+     +'<div><div class="stitle">Historial GPS</div><div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);">'+tablaGPS+'</div></div>'
+    :'<div><div class="stitle">Ubicación GPS</div><div style="background:#fef9c3;border:1px solid #fde047;border-radius:12px;padding:20px;color:#854d0e;font-size:13px;">⚠️ Sin coordenadas GPS disponibles.</div></div>';
+
+  return '<!DOCTYPE html><html lang="es"><head>'
+    +'<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>'
+    +'<title>Informe Dispositivo '+serial+' — '+EMPRESA+'</title>'
+    +FONTS_LINK
+    +leafletScript
+    +'<style>'+CSS_INFORME_BASE+cssDisp+'</style>'
+    +'</head><body><div class="page">'
+    +'<div class="rh"><div class="hl">'
+    +'<div class="logo-row"><div class="logo-ico">📱</div><div><div class="emp">'+EMPRESA+'</div><div class="emp-sub">Gestión de Dispositivos SOTI MobiControl</div></div></div>'
+    +'<div class="rt">Informe Técnico<br>de Dispositivo</div>'
+    +'<div class="rs">'+CLIENTE_CONFIG.nombre+' — Generado por SofIA</div>'
+    +'<div class="badge">📍 Informe Individual</div>'
+    +'</div>'
+    +'<div class="hr"><div class="dlabel">Fecha</div><div class="dval">'+fechaStr+'</div>'
+    +'<div class="dsub">🕐 '+horaStr+' (Colombia)</div>'
+    +'<div class="dsub" style="margin-top:10px;"><span style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:'+(conectado?'rgba(34,197,94,.15)':'rgba(239,68,68,.15)')+';color:'+estadoColor+';font-weight:700;font-size:13px;">'+estadoLabel+'</span></div>'
+    +'</div></div>'
+    +'<div class="accent-bar"></div>'
+    +'<div class="rb" style="display:flex;flex-direction:column;gap:32px;">'
+    +'<div><div class="stitle">Identificación</div>'
+    +'<div class="serial-box"><div><div class="serial-label">Número de Serial</div><div class="serial-code">'+serial+'</div></div>'
+    +'<div style="text-align:right;color:#9ca3af;"><div style="font-size:14px;font-weight:600;color:#e8eaf0;">'+modelo+'</div><div style="font-size:12px;margin-top:2px;">'+fabricante+'</div></div></div></div>'
+    +'<div><div class="stitle">Ficha Técnica</div><div class="ficha-grid">'
+    +'<div class="ficha-card"><div class="ficha-label">Estado</div><div class="ficha-val"><span class="estado-badge" style="background:'+(conectado?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)')+';color:'+estadoColor+';">'+estadoLabel+'</span></div><div class="ficha-sub">Última conexión: '+ultimaConex+'</div></div>'
+    +'<div class="ficha-card"><div class="ficha-label">Batería</div><div class="bat-wrap"><div class="bat-track"><div class="bat-fill" style="width:'+batPct+'%;background:'+batColor+';"></div></div><span class="bat-pct" style="color:'+batColor+';">'+batIcon+' '+batStr+'</span></div></div>'
+    +'<div class="ficha-card"><div class="ficha-label">Modelo</div><div class="ficha-val">'+modelo+'</div><div class="ficha-sub">'+fabricante+'</div></div>'
+    +'<div class="ficha-card"><div class="ficha-label">Negocio / Regional</div><div class="ficha-val" style="font-size:13px;line-height:1.4;">'+negocio+'</div></div>'
+    +'</div></div>'
+    +seccionStorage
+    +gpsHtml
+    +seccionBateria
+    +seccionRed
+    +seccionTrafico
+    +'<div><div class="stitle">Diagnóstico Técnico</div><div class="analisis-box"><div class="ai-badge">🤖 IA</div><div>'+analisisHtml+'</div></div></div>'
+    +'</div>'
+    +'<div class="rf"><div><span class="rf-brand">'+EMPRESA+'</span> — Informe generado por SofIA</div><div>🗓️ '+fechaStr+' · '+horaStr+'</div></div>'
+    +'</div></body></html>';
 }
 
 // ════════════════════════════════════════════════════════════════════
-// MODAL DE INFORME
+// MODAL — usa Blob URL para el iframe (fix file://)
 // ════════════════════════════════════════════════════════════════════
 function InformeModal({ msg, onClose }) {
-  const tipoInforme   = detectarTipoInforme(msg);
-  const [fase, setFase]     = useState("init");
-  const [informeHtml, setInformeHtml] = useState("");
-  const [errorMsg, setErrorMsg]       = useState("");
-  const iframeRef = useRef(null);
-  const isDispositivo = tipoInforme === "dispositivo";
-  const serial = isDispositivo ? parsearDatosDispositivo(msg).serial : "";
-  const nombreArchivo = isDispositivo
-    ? `Informe_Dispositivo_${serial}_${new Date().toISOString().slice(0,10)}.html`
-    : `Informe_Flota_${new Date().toISOString().slice(0,10)}.html`;
+  var tipoInforme = detectarTipoInforme(msg);
+  var [fase, setFase]               = useState("init");
+  var [informeHtml, setInformeHtml] = useState("");
+  var [errorMsg, setErrorMsg]       = useState("");
+  var [blobUrl, setBlobUrl]         = useState(null);
+  var iframeRef    = useRef(null);
+  var blobUrlRef   = useRef(null);
+  var isDispositivo = tipoInforme === "dispositivo";
+  var serial = isDispositivo ? parsearDatosDispositivo(msg).serial : "";
+  var nombreArchivo = isDispositivo
+    ? "Informe_Dispositivo_"+serial+"_"+new Date().toISOString().slice(0,10)+".html"
+    : "Informe_Flota_"+new Date().toISOString().slice(0,10)+".html";
 
-  useEffect(() => { lanzarGeneracion(); }, []);
+  useEffect(function(){ lanzarGeneracion(); }, []);
+
+  // Revoca el blob URL anterior cuando se actualiza
+  useEffect(function(){
+    if (blobUrl) {
+      if (iframeRef.current) iframeRef.current.src = blobUrl;
+      blobUrlRef.current = blobUrl;
+    }
+  }, [blobUrl]);
+
+  // Limpieza al desmontar
+  useEffect(function(){
+    return function(){ if(blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current); };
+  }, []);
+
+  function mostrarEnIframe(html) {
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    var blob = new Blob([html], {type:"text/html;charset=utf-8"});
+    var url  = URL.createObjectURL(blob);
+    setBlobUrl(url);
+  }
 
   async function lanzarGeneracion() {
     setFase("loading");
     try {
-      const iData = msg.informe_data || null;
-      let final   = "";
+      var iData = msg.informe_data || null;
+      var final = "";
       if (isDispositivo) {
-        const datos    = parsearDatosDispositivo(msg);
-        const analisis = await generarAnalisisIA("dispositivo", iData);
-        final = generarInformeDispositivo(datos, msg.html || "", analisis);
+        var datos    = parsearDatosDispositivo(msg);
+        var analisis = await generarAnalisisIA("dispositivo", iData);
+        final = generarInformeDispositivo(datos, msg.html||"", analisis);
       } else {
-        const metricas = parsearMetricasFlota(msg.html, iData);
-        const analisis  = await generarAnalisisIA("flota", iData);
-        final = generarInformeFlota(msg.html, analisis, iData);
+        var analisis2 = await generarAnalisisIA("flota", iData);
+        final = generarInformeFlota(msg.html, analisis2, iData);
       }
       setInformeHtml(final);
+      mostrarEnIframe(final);
       setFase("listo");
     } catch(err) {
       console.error(err);
@@ -1146,82 +782,67 @@ function InformeModal({ msg, onClose }) {
   }
 
   function abrirEnPestana() {
-    const win = window.open("","_blank");
-    if (win) { win.document.write(informeHtml); win.document.close(); }
+    if (informeHtml) {
+      var win = window.open("","_blank");
+      if (win) { win.document.write(informeHtml); win.document.close(); }
+    }
   }
 
   function generarSinIA() {
-    const iData = msg.informe_data || null;
-    let final = "";
+    var iData = msg.informe_data || null;
+    var final = "";
     if (isDispositivo) {
-      const datos = parsearDatosDispositivo(msg);
-      final = generarInformeDispositivo(datos, msg.html || "", "");
+      var datos = parsearDatosDispositivo(msg);
+      final = generarInformeDispositivo(datos, msg.html||"", "");
     } else {
       final = generarInformeFlota(msg.html, "", iData);
     }
     setInformeHtml(final);
+    mostrarEnIframe(final);
     setFase("listo");
   }
 
-  useEffect(() => {
-    if (fase === "listo" && iframeRef.current && informeHtml) {
-      const doc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
-      doc.open(); doc.write(informeHtml); doc.close();
-    }
-  }, [fase, informeHtml]);
-
-  const tipoLabel = isDispositivo ? `📱 Dispositivo${serial ? " · " + serial : ""}` : "📊 Flota";
+  var tipoLabel = isDispositivo ? "📱 Dispositivo"+(serial?" · "+serial:"") : "📊 Flota";
 
   return (
-    <div className="modal-overlay" onClick={e => { if(e.target===e.currentTarget) onClose(); }}>
+    <div className="modal-overlay" onClick={function(e){ if(e.target===e.currentTarget) onClose(); }}>
       <div className="modal-box">
         <div className="modal-header">
           <div className="modal-title">
-            <span style={{fontSize:"18px"}}>📄</span>
-            Informe Técnico
-            <span style={{fontSize:"11px",background:"rgba(79,142,247,.15)",color:"#4f8ef7",border:"1px solid rgba(79,142,247,.3)",borderRadius:"20px",padding:"2px 10px",fontWeight:600}}>
-              {tipoLabel}
-            </span>
-            {fase === "listo" && <span style={{fontSize:"11px",background:"rgba(187,213,49,.15)",color:"var(--accent)",border:"1px solid rgba(187,213,49,.3)",borderRadius:"20px",padding:"2px 10px",fontWeight:600}}>✓ Listo</span>}
+            <span style={{fontSize:"18px"}}>📄</span> Informe Técnico
+            <span style={{fontSize:"11px",background:"rgba(79,142,247,.15)",color:"#4f8ef7",border:"1px solid rgba(79,142,247,.3)",borderRadius:"20px",padding:"2px 10px",fontWeight:600}}>{tipoLabel}</span>
+            {fase==="listo" && <span style={{fontSize:"11px",background:"rgba(187,213,49,.15)",color:"var(--accent)",border:"1px solid rgba(187,213,49,.3)",borderRadius:"20px",padding:"2px 10px",fontWeight:600}}>✓ Listo</span>}
           </div>
           <div className="modal-header-actions">
-            {fase === "listo" && <>
-              <button className="modal-action-btn btn-download" onClick={() => descargarHtml(informeHtml, nombreArchivo)}>⬇️ Descargar HTML</button>
+            {fase==="listo" && <>
+              <button className="modal-action-btn btn-download" onClick={function(){ descargarHtml(informeHtml, nombreArchivo); }}>⬇️ Descargar HTML</button>
               <button className="modal-action-btn btn-newtab"   onClick={abrirEnPestana}>🔗 Abrir en pestaña</button>
             </>}
             <button className="btn-close" onClick={onClose}>×</button>
           </div>
         </div>
-
         <div className="modal-body">
-          {fase === "loading" && (
+          {fase==="loading" && (
             <div className="modal-loading">
-              <div className="modal-loading-spinner" />
-              <p>Generando informe {isDispositivo ? "de dispositivo" : "de flota"}…</p>
+              <div className="modal-loading-spinner"/>
+              <p>Generando informe {isDispositivo?"de dispositivo":"de flota"}…</p>
               <small>Analizando datos con IA</small>
             </div>
           )}
-          {fase === "error" && (
+          {fase==="error" && (
             <div className="modal-loading">
               <div style={{fontSize:"36px"}}>⚠️</div>
               <p style={{color:"#ef4444",fontWeight:600}}>Error al generar análisis IA</p>
               <p style={{fontSize:"12px",color:"var(--text-muted)",maxWidth:"320px",textAlign:"center"}}>{errorMsg}</p>
               <div style={{display:"flex",gap:"10px",marginTop:"8px"}}>
-                <button className="modal-action-btn btn-newtab" onClick={()=>{setFase("loading");lanzarGeneracion();}}>
-                  🔄 Reintentar
-                </button>
-                <button className="modal-action-btn btn-download" onClick={generarSinIA}>
-                  📄 Informe sin IA
-                </button>
+                <button className="modal-action-btn btn-newtab" onClick={function(){setFase("loading");lanzarGeneracion();}}>🔄 Reintentar</button>
+                <button className="modal-action-btn btn-download" onClick={generarSinIA}>📄 Informe sin IA</button>
               </div>
             </div>
           )}
-          {fase === "listo" && (
-            <iframe
-              ref={iframeRef}
-              className="modal-iframe"
-              title="Informe Técnico"
-              style={{flex:1, width:"100%", height:"100%", minHeight:0, border:"none", display:"block", borderBottomLeftRadius:"20px", borderBottomRightRadius:"20px"}}
+          {fase==="listo" && (
+            <iframe ref={iframeRef} className="modal-iframe" title="Informe Técnico"
+              style={{flex:1,width:"100%",height:"100%",minHeight:0,border:"none",display:"block",borderBottomLeftRadius:"20px",borderBottomRightRadius:"20px"}}
             />
           )}
         </div>
@@ -1234,49 +855,39 @@ function InformeModal({ msg, onClose }) {
 // MESSAGE BUBBLE
 // ════════════════════════════════════════════════════════════════════
 function MessageBubble({ msg, onSendMessage }) {
-  const isUser      = msg.role === "user";
-  const tieneTabla  = msg.html && msg.html.includes("<table");
-  const tipoInforme = detectarTipoInforme(msg);
-  const muestraInforme = tipoInforme !== "ninguno";
-  const nombreCSV   = `SOTI_${new Date().toISOString().slice(0,10)}.csv`;
-  const [showInforme, setShowInforme] = useState(false);
+  var isUser         = msg.role === "user";
+  var tieneTabla     = msg.html && msg.html.includes("<table");
+  var tipoInforme    = detectarTipoInforme(msg);
+  var muestraInforme = tipoInforme !== "ninguno";
+  var nombreCSV      = "SOTI_"+new Date().toISOString().slice(0,10)+".csv";
+  var [showInforme, setShowInforme] = useState(false);
 
   return (
     <>
-      <div className={`msg-row ${isUser?"user":""}`}>
-        <div className={`msg-avatar ${isUser?"user-av":"bot-av"}`}>{isUser?USER_AVATAR:BOT_AVATAR}</div>
-        <div className={`bubble ${isUser?"user-bubble":"bot-bubble"}`}>
+      <div className={"msg-row"+(isUser?" user":"")}>
+        <div className={"msg-avatar"+(isUser?" user-av":" bot-av")}>{isUser?USER_AVATAR:BOT_AVATAR}</div>
+        <div className={"bubble"+(isUser?" user-bubble":" bot-bubble")}>
           {msg.html && <div
             dangerouslySetInnerHTML={{__html:msg.html}}
-            onClick={e => {
-              const el = e.target.closest('.hint-clickable');
-              if (el && onSendMessage) {
-                const query = el.dataset.query;
-                if (query) onSendMessage(query);
-              }
+            onClick={function(e){
+              var el=e.target.closest('.hint-clickable');
+              if(el&&onSendMessage){var query=el.dataset.query,mode=el.dataset.mode||undefined;if(query)onSendMessage(query,mode);}
             }}
           />}
-          {!msg.html && !msg.battery && <div dangerouslySetInnerHTML={{__html:escapeHtml(msg.content)}} />}
-          {msg.battery && !msg.html && <BatteryBar {...msg.battery} />}
-          {msg.map && <MapMessage {...msg.map} />}
-          {(tieneTabla || muestraInforme) && (
+          {!msg.html && !msg.battery && <div dangerouslySetInnerHTML={{__html:escapeHtml(msg.content)}}/>}
+          {msg.battery && !msg.html && <BatteryBar level={msg.battery.level} name={msg.battery.name} model={msg.battery.model} lastSeen={msg.battery.lastSeen} serial={msg.battery.serial} online_raw={msg.battery.online_raw} estado={msg.battery.estado}/>}
+          {msg.informe_data && msg.informe_data.storage && !msg.html && <StorageBar totalGB={msg.informe_data.storage.totalGB} usadoGB={msg.informe_data.storage.usadoGB} dispGB={msg.informe_data.storage.dispGB} pct={msg.informe_data.storage.pct}/>}
+          {msg.map && <MapMessage lat={msg.map.lat} lng={msg.map.lng} name={msg.map.name} history={msg.map.history}/>}
+          {(tieneTabla||muestraInforme) && (
             <div className="action-btns">
-              {tieneTabla && (
-                <button className="csv-btn" onClick={()=>downloadCSV(msg.html,nombreCSV)} title="Descargar CSV">
-                  ⬇️ Descargar CSV
-                </button>
-              )}
-              {muestraInforme && (
-                <button className="informe-btn" onClick={()=>setShowInforme(true)} title="Generar informe técnico">
-                  📄 Generar Informe
-                </button>
-              )}
+              {tieneTabla && <button className="csv-btn" onClick={function(){downloadCSV(msg.html,nombreCSV);}}>⬇️ Descargar CSV</button>}
+              {muestraInforme && <button className="informe-btn" onClick={function(){setShowInforme(true);}}>📄 Generar Informe</button>}
             </div>
           )}
           <div className="bubble-time">{formatTime(msg.time)}</div>
         </div>
       </div>
-      {showInforme && <InformeModal msg={msg} onClose={()=>setShowInforme(false)} />}
+      {showInforme && <InformeModal msg={msg} onClose={function(){setShowInforme(false);}}/>}
     </>
   );
 }
@@ -1285,46 +896,70 @@ function MessageBubble({ msg, onSendMessage }) {
 // COMPONENTES BASE
 // ════════════════════════════════════════════════════════════════════
 function TypingBubble() {
-  return (<div className="msg-row"><div className="msg-avatar bot-av">{BOT_AVATAR}</div><div className="bubble bot-bubble"><div className="typing"><span/><span/><span/></div></div></div>);
+  return <div className="msg-row"><div className="msg-avatar bot-av">{BOT_AVATAR}</div><div className="bubble bot-bubble"><div className="typing"><span/><span/><span/></div></div></div>;
 }
 
 function BatteryBar({ level, name, model, lastSeen, serial, online_raw, estado }) {
-  const pct=level!=null?Math.min(100,Math.max(0,level)):0;
-  const color=pct>=60?"#bbd531":pct>=30?"#f59e0b":"#ef4444";
-  const icon=pct>=80?"🔋":pct>=50?"🔌":pct>=20?"⚠️":"🪴";
-  const conectado=online_raw===1||online_raw===true||estado==="Conectado";
-  const estadoLabel=conectado?"🟢 En línea":"🔴 Desconectado";
-  const fechaMostrar=lastSeen&&lastSeen!=="N/D"?lastSeen:"Desconocida";
+  var pct=level!=null?Math.min(100,Math.max(0,level)):0;
+  var color=pct>=60?"#bbd531":pct>=30?"#f59e0b":"#ef4444";
+  var icon=pct>=80?"🔋":pct>=50?"🔌":pct>=20?"⚠️":"🪴";
+  var conectado=online_raw===1||online_raw===true||estado==="Conectado";
+  var estadoLabel=conectado?"🟢 En línea":"🔴 Desconectado";
+  var fechaMostrar=lastSeen&&lastSeen!=="N/D"?lastSeen:"Desconocida";
   return (
     <div>
       <p style={{fontWeight:600,fontSize:"15px"}}>{icon} {name}</p>
       <p style={{fontSize:"12px",color:"var(--text-muted)",marginTop:"2px"}}>{model} · Serial: {serial}</p>
       <p style={{fontSize:"13px",marginTop:"6px"}}>{estadoLabel}</p>
       <div style={{display:"flex",alignItems:"center",gap:"10px",marginTop:"10px"}}>
-        <div className="battery-bar-track"><div className="battery-bar-fill" style={{width:`${pct}%`,background:color}}/></div>
-        <span style={{fontWeight:700,fontSize:"20px",color,minWidth:"50px",textAlign:"right"}}>{level!=null?`${level}%`:"N/D"}</span>
+        <div className="battery-bar-track"><div className="battery-bar-fill" style={{width:pct+"%",background:color}}/></div>
+        <span style={{fontWeight:700,fontSize:"20px",color:color,minWidth:"50px",textAlign:"right"}}>{level!=null?level+"%":"N/D"}</span>
       </div>
       <p style={{fontSize:"12px",color:"var(--text-muted)",marginTop:"6px"}}>Última conexión: {fechaMostrar}</p>
     </div>
   );
 }
 
+function StorageBar({ totalGB, usadoGB, dispGB, pct }) {
+  var color=pct>=90?"#ef4444":pct>=70?"#f59e0b":"#22c55e";
+  var icon=pct>=90?"🔴":pct>=70?"🟠":"🟢";
+  return (
+    <div style={{marginTop:"10px"}}>
+      <p style={{fontWeight:600,fontSize:"13px",marginBottom:"8px"}}>💾 Almacenamiento interno</p>
+      <div style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"10px",padding:"14px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+          <span style={{fontSize:"13px",color:"var(--text-main)"}}>{icon} <b>{usadoGB} GB</b> usados de <b>{totalGB} GB</b></span>
+          <span style={{fontSize:"22px",fontWeight:700,color:color}}>{pct}%</span>
+        </div>
+        <div style={{height:"16px",background:"var(--border)",borderRadius:"8px",overflow:"hidden"}}>
+          <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,"+color+"cc,"+color+")",borderRadius:"8px"}}/>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:"10px",fontSize:"11px",color:"#9ca3af"}}>
+          <span>🟢 Disponible: <b style={{color:"#22c55e"}}>{dispGB} GB</b></span>
+          <span>Usado: <b style={{color:color}}>{pct}%</b></span>
+          <span>Total: <b>{totalGB} GB</b></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MapMessage({ lat, lng, name, history }) {
-  const containerRef=useRef(null); const mapRef=useRef(null);
-  const googleMapsUrl=`https://www.google.com/maps?q=${lat},${lng}`;
-  useEffect(() => {
-    if (!containerRef.current||typeof L==="undefined") return;
-    if (mapRef.current){mapRef.current.remove();mapRef.current=null;}
-    const puntos=history&&history.length>0?history:[{lat,lng,fecha:"",num:1}];
-    const map=L.map(containerRef.current,{zoomControl:true}).setView([puntos[0].lat,puntos[0].lng],15);
+  var containerRef=useRef(null), mapRef=useRef(null);
+  var googleMapsUrl="https://www.google.com/maps?q="+lat+","+lng;
+  useEffect(function(){
+    if(!containerRef.current||typeof L==="undefined") return;
+    if(mapRef.current){mapRef.current.remove();mapRef.current=null;}
+    var puntos=history&&history.length>0?history:[{lat:lat,lng:lng,fecha:"",num:1}];
+    var map=L.map(containerRef.current,{zoomControl:true}).setView([puntos[0].lat,puntos[0].lng],15);
     L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",{attribution:"© Google Maps",maxZoom:20}).addTo(map);
-    if (puntos.length>1){const ll=puntos.map(p=>[p.lat,p.lng]);L.polyline(ll,{color:"#bbd531",weight:2,opacity:.6,dashArray:"5,5"}).addTo(map);L.polyline(ll,{color:"#ef4444",weight:3,opacity:.8,dashArray:"6,4"}).addTo(map);}
-    const iU=L.divIcon({className:"",html:`<div style="background:#bbd531;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(187,213,49,.8);"></div>`,iconSize:[14,14],iconAnchor:[7,7]});
-    const iN=L.divIcon({className:"",html:`<div style="background:#4f8ef7;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:.8;"></div>`,iconSize:[9,9],iconAnchor:[4,4]});
-    puntos.forEach((p,idx)=>{const esU=idx===0;const m=L.marker([p.lat,p.lng],{icon:esU?iU:iN}).addTo(map);m.bindPopup(`<b>${esU?"🟢 Último punto":"Punto "+p.num}</b><br>📅 ${p.fecha}<br>📍 ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}<br><a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" style="color:#4285F4;">Ver en Google Maps</a>`);if(esU)m.openPopup();});
-    if(puntos.length>1){const b=L.latLngBounds(puntos.map(p=>[p.lat,p.lng]));map.fitBounds(b,{padding:[30,30]});}
+    if(puntos.length>1){var ll=puntos.map(function(p){return[p.lat,p.lng];});L.polyline(ll,{color:"#bbd531",weight:2,opacity:.6,dashArray:"5,5"}).addTo(map);L.polyline(ll,{color:"#ef4444",weight:3,opacity:.8,dashArray:"6,4"}).addTo(map);}
+    var iU=L.divIcon({className:"",html:'<div style="background:#bbd531;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(187,213,49,.8);"></div>',iconSize:[14,14],iconAnchor:[7,7]});
+    var iN=L.divIcon({className:"",html:'<div style="background:#4f8ef7;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:.8;"></div>',iconSize:[9,9],iconAnchor:[4,4]});
+    puntos.forEach(function(p,idx){var esU=idx===0;var m=L.marker([p.lat,p.lng],{icon:esU?iU:iN}).addTo(map);m.bindPopup("<b>"+(esU?"🟢 Último punto":"Punto "+p.num)+"</b><br>📅 "+p.fecha+"<br>📍 "+p.lat.toFixed(6)+", "+p.lng.toFixed(6)+"<br><a href='https://www.google.com/maps?q="+p.lat+","+p.lng+"' target='_blank' style='color:#4285F4;'>Ver en Google Maps</a>");if(esU)m.openPopup();});
+    if(puntos.length>1){var b=L.latLngBounds(puntos.map(function(p){return[p.lat,p.lng];}));map.fitBounds(b,{padding:[30,30]});}
     mapRef.current=map;
-    return ()=>{if(mapRef.current){mapRef.current.remove();mapRef.current=null;}};
+    return function(){if(mapRef.current){mapRef.current.remove();mapRef.current=null;}};
   },[lat,lng,name,history]);
   return (
     <div>
@@ -1341,102 +976,69 @@ function MapMessage({ lat, lng, name, history }) {
 // AUDIO BUTTON
 // ════════════════════════════════════════════════════════════════════
 function AudioButton({ onTranscript, disabled }) {
-  const [status, setStatus] = useState("idle");
-  const [toast, setToast]   = useState("");
-  const mediaRecRef  = useRef(null);
-  const chunksRef    = useRef([]);
-  const timerRef     = useRef(null);
+  var [status, setStatus] = useState("idle");
+  var [toast, setToast]   = useState("");
+  var mediaRecRef = useRef(null), chunksRef = useRef([]), timerRef = useRef(null);
 
-  const showToast = (msg, ms=2500) => {
-    setToast(msg);
+  var showToast = function(msg, ms) {
+    ms=ms||2500; setToast(msg);
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(()=>setToast(""), ms);
+    timerRef.current=setTimeout(function(){setToast("");},ms);
   };
 
-  const startRecording = async () => {
+  var startRecording = async function() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      chunksRef.current = [];
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "audio/webm";
-      const rec = new MediaRecorder(stream, { mimeType });
-      rec.ondataavailable = e => { if(e.data.size>0) chunksRef.current.push(e.data); };
-      rec.onstop = () => {
-        stream.getTracks().forEach(t=>t.stop());
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        sendToWhisper(blob, mimeType);
-      };
-      rec.start(200);
-      mediaRecRef.current = rec;
-      setStatus("recording");
-      showToast("🔴 Grabando… toca de nuevo para enviar", 60000);
-    } catch(err) {
-      showToast("⚠️ Sin acceso al micrófono");
+      var stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      chunksRef.current=[];
+      var mimeType=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":MediaRecorder.isTypeSupported("audio/mp4")?"audio/mp4":"audio/webm";
+      var rec=new MediaRecorder(stream,{mimeType:mimeType});
+      rec.ondataavailable=function(e){if(e.data.size>0)chunksRef.current.push(e.data);};
+      rec.onstop=function(){stream.getTracks().forEach(function(t){t.stop();});var blob=new Blob(chunksRef.current,{type:mimeType});sendToWhisper(blob,mimeType);};
+      rec.start(200); mediaRecRef.current=rec; setStatus("recording");
+      showToast("🔴 Grabando… toca de nuevo para enviar",60000);
+    } catch(err){ showToast("⚠️ Sin acceso al micrófono"); }
+  };
+
+  var stopRecording = function() {
+    if(mediaRecRef.current&&mediaRecRef.current.state!=="inactive"){
+      mediaRecRef.current.stop(); setStatus("transcribing"); showToast("⏳ Transcribiendo…",15000);
     }
   };
 
-  const stopRecording = () => {
-    if(mediaRecRef.current && mediaRecRef.current.state !== "inactive") {
-      mediaRecRef.current.stop();
-      setStatus("transcribing");
-      showToast("⏳ Transcribiendo Audio...", 15000);
-    }
-  };
-
-  const sendToWhisper = async (blob, mimeType) => {
-    const ext = mimeType.includes("mp4") ? "m4a" : "webm";
-    const formData = new FormData();
-    formData.append("audio", blob, `voice.${ext}`);
+  var sendToWhisper = async function(blob, mimeType) {
+    var ext=mimeType.includes("mp4")?"m4a":"webm";
+    var formData=new FormData(); formData.append("audio",blob,"voice."+ext);
     try {
-      const res = await fetch(`${API_BASE}/webhook/api/transcribe`, { method:"POST", body: formData });
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      const raw = await res.text();
-      if(!raw || !raw.trim()) { showToast("⚠️ El servidor no respondió nada"); return; }
-      let data;
-      try { data = JSON.parse(raw); }
-      catch(e) { showToast("⚠️ Respuesta inválida del servidor"); return; }
-      const text = (data.text||"").trim();
-      if(text) { onTranscript(text); }
-      else showToast("⚠️ No se detectó voz");
-    } catch(err) {
-      showToast(`⚠️ ${err.message}`);
-    } finally {
-      setStatus("idle");
-    }
+      var res=await fetch(API_BASE+"/webhook/api/transcribe",{method:"POST",body:formData});
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      var raw=await res.text();
+      if(!raw||!raw.trim()){showToast("⚠️ Sin respuesta");return;}
+      var data; try{data=JSON.parse(raw);}catch(e){showToast("⚠️ Respuesta inválida");return;}
+      var text=(data.text||"").trim();
+      if(text) onTranscript(text); else showToast("⚠️ No se detectó voz");
+    } catch(err){ showToast("⚠️ "+err.message); }
+    finally{ setStatus("idle"); }
   };
 
-  const handleClick = () => {
+  var handleClick = function() {
     if(status==="idle") startRecording();
     else if(status==="recording") stopRecording();
   };
 
-  const micIcon = (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="White" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  var micIcon=(
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="9" y="2" width="6" height="11" rx="3"/>
       <path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>
     </svg>
   );
-  const stopIcon = (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-      <rect x="4" y="4" width="16" height="16" rx="2"/>
-    </svg>
-  );
-  const spinIcon = (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-      <path d="M12 2a10 10 0 0 1 10 10"/>
-    </svg>
-  );
+  var stopIcon=<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>;
+  var spinIcon=<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M12 2a10 10 0 0 1 10 10"/></svg>;
 
   return (
     <div style={{position:"relative",flexShrink:0}}>
-      <button
-        className={`audio-btn ${status}`}
-        onClick={handleClick}
-        disabled={disabled||status==="transcribing"}
-        title={status==="idle"?"Grabar voz":status==="recording"?"Detener grabación":"Transcribiendo…"}
-      >
-        {status==="recording" ? stopIcon : status==="transcribing" ? spinIcon : micIcon}
+      <button className={"audio-btn "+(status)} onClick={handleClick} disabled={disabled||status==="transcribing"}
+        title={status==="idle"?"Grabar voz":status==="recording"?"Detener grabación":"Transcribiendo…"}>
+        {status==="recording"?stopIcon:status==="transcribing"?spinIcon:micIcon}
       </button>
       {toast && <div className="audio-toast">{toast}</div>}
     </div>
@@ -1444,21 +1046,24 @@ function AudioButton({ onTranscript, disabled }) {
 }
 
 function ModeSelector({ activeMode, onSelect }) {
-  const [open,setOpen]=useState(false); const wrapRef=useRef(null);
-  useEffect(()=>{const h=e=>{if(wrapRef.current&&!wrapRef.current.contains(e.target))setOpen(false);};document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
-  const current=MODES.find(m=>m.id===activeMode)||MODES[0];
+  var [open,setOpen]=useState(false), wrapRef=useRef(null);
+  useEffect(function(){
+    var h=function(e){if(wrapRef.current&&!wrapRef.current.contains(e.target))setOpen(false);};
+    document.addEventListener("mousedown",h); return function(){document.removeEventListener("mousedown",h);};
+  },[]);
+  var current=MODES.find(function(m){return m.id===activeMode;})||MODES[0];
   return (
     <div style={{position:"relative"}} ref={wrapRef}>
-      <button className={`mode-btn ${activeMode!=="free"?"mode-btn-active":""}`} onClick={()=>setOpen(o=>!o)} title="Seleccionar agente">{current.icon}</button>
-      {open&&(
+      <button className={"mode-btn"+(activeMode!=="free"?" mode-btn-active":"")} onClick={function(){setOpen(function(o){return !o;});}} title="Seleccionar agente">{current.icon}</button>
+      {open && (
         <div className="mode-popup">
           <p style={{fontSize:"11px",fontWeight:600,letterSpacing:".6px",textTransform:"uppercase",color:"var(--text-muted)",marginBottom:"10px"}}>Seleccionar agente</p>
           <div className="mode-grid">
-            {MODES.map(m=>(
-              <button key={m.id} className={`mode-option ${activeMode===m.id?"mode-option-active":""}`} onClick={()=>{onSelect(m.id);setOpen(false);}}>
+            {MODES.map(function(m){return (
+              <button key={m.id} className={"mode-option"+(activeMode===m.id?" mode-option-active":"")} onClick={function(){onSelect(m.id);setOpen(false);}}>
                 <span style={{fontSize:"22px"}}>{m.icon}</span><span style={{fontSize:"11px",marginTop:"4px"}}>{m.label}</span>
               </button>
-            ))}
+            );})}
           </div>
         </div>
       )}
@@ -1466,223 +1071,133 @@ function ModeSelector({ activeMode, onSelect }) {
   );
 }
 
-// ════════════════════════════════════════════════════════════════════
-// SESIÓN — helpers
-// ════════════════════════════════════════════════════════════════════
-function getSession() {
-  try { return JSON.parse(sessionStorage.getItem(STORAGE_SESSION) || 'null'); } catch { return null; }
-}
-function saveSession(user) {
-  sessionStorage.setItem(STORAGE_SESSION, JSON.stringify(user));
-}
-function clearSession() {
-  sessionStorage.removeItem(STORAGE_SESSION);
-}
+function getSession() { try{return JSON.parse(sessionStorage.getItem(STORAGE_SESSION)||'null');}catch{return null;} }
+function saveSession(user) { sessionStorage.setItem(STORAGE_SESSION,JSON.stringify(user)); }
+function clearSession() { sessionStorage.removeItem(STORAGE_SESSION); }
 
-// ════════════════════════════════════════════════════════════════════
-// LOGIN SCREEN
-// ════════════════════════════════════════════════════════════════════
 function LoginScreen({ onLogin }) {
-  const [usuario, setUsuario] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
-  const passRef = useRef(null);
-
-  const handleLogin = (e) => {
-    e && e.preventDefault();
-    setLoading(true);
-    setError("");
-    setTimeout(() => {
-      const found = USUARIOS.find(
-        u => u.usuario.toLowerCase() === usuario.trim().toLowerCase()
-          && u.password === password
-      );
-      if (found) {
-        // ── FIX: guardar sesión y recargar la página limpiamente ──────
-        // Esto evita la pantalla negra causada por el re-render parcial de React.
-        // Al recargar, getSession() recupera el usuario y la app arranca autenticada.
-        saveSession(found);
-        window.location.reload();
-      } else {
-        setError("Usuario o contraseña incorrectos");
-        setLoading(false);
-      }
-    }, 600);
+  var [usuario,setUsuario]=useState(""), [password,setPassword]=useState(""), [error,setError]=useState(""), [loading,setLoading]=useState(false);
+  var passRef=useRef(null);
+  var handleLogin=function(e){
+    e&&e.preventDefault(); setLoading(true); setError("");
+    setTimeout(function(){
+      var found=USUARIOS.find(function(u){return u.usuario.toLowerCase()===usuario.trim().toLowerCase()&&u.password===password;});
+      if(found){saveSession(found);window.location.reload();}
+      else{setError("Usuario o contraseña incorrectos");setLoading(false);}
+    },600);
   };
-
   return (
     <div className="login-overlay">
-      <div className="login-bg">
-        <div className="login-bg-grid"/>
-        <div className="login-bg-glow"/>
-      </div>
+      <div className="login-bg"><div className="login-bg-grid"/><div className="login-bg-glow"/></div>
       <div className="login-card">
         <div className="login-logo-wrap">
-          <img
-            src="https://b2kmnbrlfbl9jvgp.public.blob.vercel-storage.com/sofIAlogo.jpg"
-            alt="SofIA"
-            className="login-logo-img"
-          />
+          <img src="https://b2kmnbrlfbl9jvgp.public.blob.vercel-storage.com/sofIAlogo.jpg" alt="SofIA" className="login-logo-img"/>
           <span className="login-tagline">Asistente SOTI · Compunet</span>
         </div>
-
         <form onSubmit={handleLogin}>
           <div className="login-field">
             <label className="login-label">Usuario</label>
-            <input
-              className="login-input"
-              type="text"
-              placeholder="Tu usuario"
-              value={usuario}
-              autoComplete="username"
-              autoFocus
-              onChange={e => setUsuario(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && passRef.current?.focus()}
-            />
+            <input className="login-input" type="text" placeholder="Tu usuario" value={usuario} autoComplete="username" autoFocus
+              onChange={function(e){setUsuario(e.target.value);}} onKeyDown={function(e){if(e.key==="Enter"&&passRef.current)passRef.current.focus();}}/>
           </div>
           <div className="login-field">
             <label className="login-label">Contraseña</label>
-            <input
-              ref={passRef}
-              className="login-input"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              autoComplete="current-password"
-              onChange={e => setPassword(e.target.value)}
-            />
+            <input ref={passRef} className="login-input" type="password" placeholder="••••••••" value={password} autoComplete="current-password"
+              onChange={function(e){setPassword(e.target.value);}}/>
           </div>
-          <button
-            className="login-btn"
-            type="submit"
-            disabled={loading || !usuario || !password}
-          >
-            {loading ? "Verificando…" : "Ingresar →"}
-          </button>
+          <button className="login-btn" type="submit" disabled={loading||!usuario||!password}>{loading?"Verificando…":"Ingresar →"}</button>
         </form>
-
         {error && <div className="login-error">⚠️ {error}</div>}
-
-        <div className="login-footer">
-          <span className="login-dot"/>SofIA — Sistema seguro
-        </div>
+        <div className="login-footer"><span className="login-dot"/>SofIA — Sistema seguro</div>
       </div>
     </div>
   );
 }
 
-// ════════════════════════════════════════════════════════════════════
-// TRANSFORMAR HINTS CLICKEABLES
-// ════════════════════════════════════════════════════════════════════
 function transformarHints(htmlStr) {
-  if (!htmlStr) return htmlStr;
-  return htmlStr.replace(
-    /💡\s*(Para ver[^<]*:?\s*)<i>"([^"]+)"<\/i>/g,
-    (match, prefix, query) => {
-      const escaped = query.replace(/"/g, '&quot;');
-      return '<span class="hint-clickable" data-query="' + escaped + '">'
-           + '<span class="hint-icon">💡</span>'
-           + prefix + '<b>' + query + '</b>'
-           + '</span>';
-    }
-  );
+  if(!htmlStr) return htmlStr;
+  return htmlStr.replace(/💡\s*(Para ver[^<]*:?\s*)<i>"([^"]+)"<\/i>/g,function(match,prefix,query){
+    var escaped=query.replace(/"/g,'&quot;');
+    return '<span class="hint-clickable" data-query="'+escaped+'" data-mode="inventory"><span class="hint-icon">💡</span>'+prefix+'<b>'+query+'</b></span>';
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════
 // APP
 // ════════════════════════════════════════════════════════════════════
 function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    // Al cargar, recuperar sesión del sessionStorage (funciona tras el reload del login)
-    const session = getSession();
-    if (session) {
-      CLIENTE_CONFIG = session.cliente;
-    }
+  var [currentUser,setCurrentUser]=useState(function(){
+    var session=getSession();
+    if(session) CLIENTE_CONFIG=session.cliente;
     return session;
   });
-  const [sessions,setSessions]=useState(()=>loadSessions());
-  const [activeChatId,setActiveChatId]=useState(null);
-  const [messages,setMessages]=useState([]);
-  const [input,setInput]=useState("");
-  const [loading,setLoading]=useState(false);
-  const [activeMode,setActiveMode]=useState("free");
-  const bottomRef=useRef(null); const textareaRef=useRef(null);
-  const activeChatIdRef=useRef(null); const activeModeRef=useRef("free");
+  var [sessions,setSessions]       = useState(function(){return loadSessions();});
+  var [activeChatId,setActiveChatId] = useState(null);
+  var [messages,setMessages]       = useState([]);
+  var [input,setInput]             = useState("");
+  var [loading,setLoading]         = useState(false);
+  var [activeMode,setActiveMode]   = useState("free");
+  var bottomRef=useRef(null), textareaRef=useRef(null);
+  var activeChatIdRef=useRef(null), activeModeRef=useRef("free");
 
-  const handleLogout = () => {
-    clearSession();
-    CLIENTE_CONFIG = null;
-    window.location.reload();
-  };
+  var handleLogout=function(){clearSession();CLIENTE_CONFIG=null;window.location.reload();};
 
-  if (!currentUser) {
-    return <LoginScreen onLogin={() => {}} />;
-  }
+  if(!currentUser) return <LoginScreen onLogin={function(){}}/>;
 
-  // Envía el texto transcripto directo al chat
-  const handleTranscript = useCallback((text) => {
-    sendMessage(text);
-  }, []);
+  var handleTranscript=useCallback(function(text){sendMessage(text);},[]);
 
-  useEffect(()=>{activeChatIdRef.current=activeChatId;},[activeChatId]);
-  useEffect(()=>{activeModeRef.current=activeMode;},[activeMode]);
-  useEffect(()=>{saveSessions(sessions);},[sessions]);
-  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:"smooth"});},[messages,loading]);
+  useEffect(function(){activeChatIdRef.current=activeChatId;},[activeChatId]);
+  useEffect(function(){activeModeRef.current=activeMode;},[activeMode]);
+  useEffect(function(){saveSessions(sessions);},[sessions]);
+  useEffect(function(){if(bottomRef.current)bottomRef.current.scrollIntoView({behavior:"smooth"});},[messages,loading]);
 
-  const startNewChat=()=>{setMessages([]);setActiveChatId(null);};
-  const loadChat=s=>{setMessages(s.messages.map(m=>({...m,time:new Date(m.time)})));setActiveChatId(s.id);};
-  const deleteChat=(e,id)=>{e.stopPropagation();setSessions(p=>p.filter(s=>s.id!==id));if(activeChatIdRef.current===id){setMessages([]);setActiveChatId(null);}};
+  var startNewChat=function(){setMessages([]);setActiveChatId(null);};
+  var loadChat=function(s){setMessages(s.messages.map(function(m){return Object.assign({},m,{time:new Date(m.time)});}));setActiveChatId(s.id);};
+  var deleteChat=function(e,id){e.stopPropagation();setSessions(function(p){return p.filter(function(s){return s.id!==id;});});if(activeChatIdRef.current===id){setMessages([]);setActiveChatId(null);}};
 
-  const sendMessage=useCallback(async(text,modeOverride)=>{
-    const rawContent=(text||input).trim();
+  var sendMessage=useCallback(async function(text,modeOverride){
+    var rawContent=(text||input).trim();
     if(!rawContent||loading) return;
-    const mode=modeOverride||activeModeRef.current;
-    const currentMode=MODES.find(m=>m.id===mode)||MODES[0];
-    let apiMessage=rawContent;
-    if(mode==="location")  apiMessage=`ubicación serial: ${rawContent}`;
-    else if(mode==="battery")   apiMessage=`batería serial: ${rawContent}`;
-    else if(mode==="inventory") apiMessage=`lista dispositivos ${rawContent}`;
-    const prefix=currentMode.id!=="free"?`${currentMode.icon} `:"";
-    const userMsg={role:"user",content:prefix+rawContent,html:null,time:new Date()};
-    setMessages(p=>[...p,userMsg]); setInput(""); setLoading(true);
+    var mode=modeOverride||activeModeRef.current;
+    var currentMode=MODES.find(function(m){return m.id===mode;})||MODES[0];
+    var apiMessage=rawContent;
+    if(mode==="location") apiMessage="ubicación serial: "+rawContent;
+    else if(mode==="battery") apiMessage="batería serial: "+rawContent;
+    else if(mode==="inventory"&&!rawContent.toLowerCase().startsWith("lista")) apiMessage="lista dispositivos "+rawContent;
+    var prefix=currentMode.id!=="free"?currentMode.icon+" ":"";
+    var userMsg={role:"user",content:prefix+rawContent,html:null,time:new Date()};
+    setMessages(function(p){return p.concat([userMsg]);}); setInput(""); setLoading(true);
     if(textareaRef.current) textareaRef.current.style.height="auto";
-    let botMsg;
+    var botMsg;
     try {
-      const history=messages
-        .filter(m => {
-          const c = m.content || "";
-          return !m.isError && !c.includes("⚠️") && !c.includes("Error al conectar") && c.trim() !== "";
-        })
+      var history=messages
+        .filter(function(m){var c=m.content||"";return !m.isError&&!c.includes("⚠️")&&!c.includes("Error al conectar")&&c.trim()!=="";})
         .slice(-6)
-        .map(m=>({role:m.role==="bot"?"assistant":"user",content:m.content||(m.html?"[respuesta anterior]":"")}))
-        .filter(m => m.content.trim() !== "");
-      const res=await fetch(`${API_BASE}/webhook/api/chat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-        message:apiMessage,history,mode,
-        cliente_path:       CLIENTE_CONFIG.path,
-        cliente_nombre:     CLIENTE_CONFIG.nombre,
-        cliente_negocios:   CLIENTE_CONFIG.negocios,
-        cliente_regionales: CLIENTE_CONFIG.regionales,
-      })});
-      const raw=await res.text();
-      if(!raw||!raw.trim()) throw new Error(`El servidor respondió vacío (HTTP ${res.status}) — revisa el flujo en n8n`);
-      if(!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0,200)}`);
-      let data;
-      try { data=JSON.parse(raw); }
-      catch(e) { throw new Error(`Respuesta no es JSON válido: ${raw.slice(0,200)}`); }
+        .map(function(m){return {role:m.role==="bot"?"assistant":"user",content:m.content||(m.html?"[respuesta anterior]":"")};})
+        .filter(function(m){return m.content.trim()!=="";});
+      var res=await fetch(API_BASE+"/webhook/api/chat",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({message:apiMessage,history:history,mode:mode,
+          cliente_path:CLIENTE_CONFIG.path,cliente_nombre:CLIENTE_CONFIG.nombre,
+          cliente_negocios:CLIENTE_CONFIG.negocios,cliente_regionales:CLIENTE_CONFIG.regionales})
+      });
+      var raw=await res.text();
+      if(!raw||!raw.trim()) throw new Error("El servidor respondió vacío (HTTP "+res.status+")");
+      if(!res.ok) throw new Error("HTTP "+res.status+": "+raw.slice(0,200));
+      var data; try{data=JSON.parse(raw);}catch(e){throw new Error("Respuesta no es JSON: "+raw.slice(0,200));}
       botMsg={role:"bot",content:data.text||"",html:transformarHints(data.html||null),map:data.map||null,battery:data.battery||null,informe_data:data.informe_data||null,isError:false,time:new Date()};
     } catch(err){
-      botMsg={role:"bot",content:`⚠️ ${err.message}`,html:null,map:null,battery:null,isError:true,time:new Date()};
+      botMsg={role:"bot",content:"⚠️ "+err.message,html:null,map:null,battery:null,isError:true,time:new Date()};
     }
-    setMessages(prev=>{
-      const updated=[...prev,botMsg];
-      const currentId=activeChatIdRef.current;
-      const title=rawContent.slice(0,45)+(rawContent.length>45?"…":"");
+    setMessages(function(prev){
+      var updated=prev.concat([botMsg]);
+      var currentId=activeChatIdRef.current;
+      var title=rawContent.slice(0,45)+(rawContent.length>45?"…":"");
       if(!botMsg.isError){
-        setSessions(ps=>{
-          if(currentId) return ps.map(s=>s.id===currentId?{...s,messages:updated,updatedAt:Date.now()}:s);
-          const newId=genId(); activeChatIdRef.current=newId; setActiveChatId(newId);
-          return [{id:newId,title,messages:updated,updatedAt:Date.now()},...ps];
+        setSessions(function(ps){
+          if(currentId) return ps.map(function(s){return s.id===currentId?Object.assign({},s,{messages:updated,updatedAt:Date.now()}):s;});
+          var newId=genId(); activeChatIdRef.current=newId; setActiveChatId(newId);
+          return [{id:newId,title:title,messages:updated,updatedAt:Date.now()}].concat(ps);
         });
       }
       return updated;
@@ -1690,17 +1205,15 @@ function App() {
     setLoading(false);
   },[input,loading,messages]);
 
-  const handleModeSelect=modeId=>{setActiveMode(modeId);const m=MODES.find(x=>x.id===modeId);if(m?.autoQuery)sendMessage(m.autoQuery,modeId);};
-  const handleKey=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}};
-  const handleTextarea=e=>{setInput(e.target.value);e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,120)+"px";};
+  var handleModeSelect=function(modeId){setActiveMode(modeId);var m=MODES.find(function(x){return x.id===modeId;});if(m&&m.autoQuery)sendMessage(m.autoQuery,modeId);};
+  var handleKey=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}};
+  var handleTextarea=function(e){setInput(e.target.value);e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,120)+"px";};
 
-  const isEmpty=messages.length===0;
-  const currentMode=MODES.find(m=>m.id===activeMode)||MODES[0];
-  const placeholder=activeMode!=="free"?currentMode.hint:"Escribe tu consulta… (Enter para enviar, Shift+Enter para saltar línea)";
-
-  // ── Logo del cliente activo para la pantalla de bienvenida ──────────
-  const logoCliente = getLogoCliente(currentUser?.usuario);
-  const nombreCliente = currentUser?.cliente?.nombre || "SofIA";
+  var isEmpty=messages.length===0;
+  var currentMode=MODES.find(function(m){return m.id===activeMode;})||MODES[0];
+  var placeholder=activeMode!=="free"?currentMode.hint:"Escribe tu consulta… (Enter enviar, Shift+Enter nueva línea)";
+  var logoCliente=getLogoCliente(currentUser&&currentUser.usuario);
+  var nombreCliente=currentUser&&currentUser.cliente?currentUser.cliente.nombre:"SofIA";
 
   return (
     <div className="app">
@@ -1710,63 +1223,59 @@ function App() {
         <div><p className="sidebar-section-title">Recientes</p></div>
         <div className="chat-history">
           {sessions.length===0&&<p style={{fontSize:"12px",color:"var(--text-muted)",padding:"8px 12px"}}>Sin conversaciones guardadas</p>}
-          {sessions.map(s=>(
-            <div key={s.id} className={`history-item ${s.id===activeChatId?"active":""}`} onClick={()=>loadChat(s)}>
+          {sessions.map(function(s){return (
+            <div key={s.id} className={"history-item"+(s.id===activeChatId?" active":"")} onClick={function(){loadChat(s);}}>
               <span className="history-item-text">💬 {s.title}</span>
-              <button className="history-delete-btn" onClick={e=>deleteChat(e,s.id)} title="Eliminar">×</button>
+              <button className="history-delete-btn" onClick={function(e){deleteChat(e,s.id);}} title="Eliminar">×</button>
             </div>
-          ))}
+          );})}
         </div>
         <div className="sidebar-footer">
           <div className="avatar" style={{background:'#0d0f14',border:'1px solid '+currentUser.color+'55',padding:'2px',overflow:'hidden'}}>
-            <img src={getLogoCliente(currentUser?.usuario)} alt={currentUser.cliente.nombre} style={{width:'100%',height:'100%',objectFit:'contain',borderRadius:'50%',display:'block'}}/>
+            <img src={getLogoCliente(currentUser&&currentUser.usuario)} alt={currentUser.cliente.nombre} style={{width:'100%',height:'100%',objectFit:'contain',borderRadius:'50%',display:'block'}}/>
           </div>
-          <div className="user-info"><div className="user-name">{currentUser.nombre}</div><div className="user-role" style={{color:currentUser.color+'cc'}}>{currentUser.cliente.nombre}</div></div>
-          <button onClick={handleLogout} title="Cerrar sesión" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',fontSize:'18px',lineHeight:1,padding:'4px',borderRadius:'6px',transition:'color .15s'}} onMouseEnter={e=>e.target.style.color='#ef4444'} onMouseLeave={e=>e.target.style.color='var(--text-muted)'}>⏏</button>
+          <div className="user-info">
+            <div className="user-name">{currentUser.nombre}</div>
+            <div className="user-role" style={{color:currentUser.color+'cc'}}>{currentUser.cliente.nombre}</div>
+          </div>
+          <button onClick={handleLogout} title="Cerrar sesión"
+            style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-muted)',fontSize:'18px',lineHeight:1,padding:'4px',borderRadius:'6px',transition:'color .15s'}}
+            onMouseEnter={function(e){e.target.style.color='#ef4444';}} onMouseLeave={function(e){e.target.style.color='var(--text-muted)';}}>⏏</button>
         </div>
       </aside>
-
       <main className="chat-main">
         <header className="chat-header">
           <div><div className="chat-header-title">Asistente SOTI</div><div className="chat-header-sub">Consultas en lenguaje natural</div></div>
           <div className="status-badge"><span className="status-dot"/> Conectado</div>
         </header>
-
         <div className="messages-area">
-          {isEmpty ? (
+          {isEmpty?(
             <div className="welcome">
-              {/* ── Logo dinámico por cliente ─────────────────────────── */}
-              <div className="welcome-icon">
-                <img
-                  src={logoCliente}
-                  alt={nombreCliente}
-                  style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"20px"}}
-                />
-              </div>
+              <div className="welcome-icon"><img src={logoCliente} alt={nombreCliente} style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"20px"}}/></div>
               <h2>Hola, ¿en qué puedo ayudarte?</h2>
               <p>Soy tu asistente para consultar la base de datos GPS. Puedes preguntarme sobre dispositivos, ubicaciones y más.</p>
               <div className="suggestions">
-                {SUGGESTIONS.map((s,i)=><button key={i} className="suggestion-chip" onClick={()=>sendMessage(s)}>{s}</button>)}
+                {SUGGESTIONS.map(function(s,i){return <button key={i} className="suggestion-chip" onClick={function(){sendMessage(s);}}>{s}</button>;})}
               </div>
             </div>
-          ) : messages.map((m,i)=><MessageBubble key={i} msg={m} onSendMessage={sendMessage}/>)}
+          ):messages.map(function(m,i){return <MessageBubble key={i} msg={m} onSendMessage={sendMessage}/>;})}
           {loading&&<TypingBubble/>}
           <div ref={bottomRef}/>
         </div>
-
         <div className="input-area">
           {activeMode!=="free"&&(
             <div style={{marginBottom:"8px"}}>
               <span className="mode-badge">{currentMode.icon} {currentMode.label}
-                <button className="mode-badge-close" onClick={()=>setActiveMode("free")} title="Volver al modo libre">×</button>
+                <button className="mode-badge-close" onClick={function(){setActiveMode("free");}} title="Volver al modo libre">×</button>
               </span>
             </div>
           )}
           <div className="input-wrapper">
             <ModeSelector activeMode={activeMode} onSelect={handleModeSelect}/>
             <AudioButton onTranscript={handleTranscript} disabled={loading}/>
-            <textarea ref={textareaRef} className="chat-input" placeholder={placeholder} value={input} onChange={handleTextarea} onKeyDown={handleKey} rows={1}/>
-            <button className="send-btn" onClick={()=>sendMessage()} disabled={!input.trim()||loading} title="Enviar">
+            <textarea ref={textareaRef} className="chat-input" placeholder={placeholder} value={input}
+              onChange={handleTextarea} onKeyDown={handleKey} rows={1}/>
+            <button className="send-btn" onClick={function(){sendMessage();}} disabled={!input.trim()||loading} title="Enviar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
               </svg>
