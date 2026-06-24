@@ -69,16 +69,16 @@
     .suggestion-chip:hover{border-color:var(--accent);color:var(--text-main);background:var(--bg-input);}
     .msg-row{display:flex;gap:12px;align-items:flex-start;}
     .msg-row.user{flex-direction:row-reverse;}
-    .msg-avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;}
-    .msg-avatar.bot-av{background:linear-gradient(135deg,#4f8ef7,#7c5cfc);margin-top:2px;}
-    .msg-avatar.user-av{background:var(--bubble-user);border:1px solid var(--accent-dim);}
+    .msg-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .msg-avatar.bot-av{background:#ffffff;margin-top:2px;box-shadow:0 0 0 1px rgba(255,255,255,.15);}
+    .msg-avatar.user-av{background:#ffffff;border:1px solid var(--accent-dim);}
     .bubble{max-width:70%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.65;word-break:break-word;}
     .bubble.user-bubble{background:var(--bubble-user);border:1px solid var(--accent-dim);border-bottom-right-radius:4px;color:var(--text-main);}
     .bubble.bot-bubble{background:var(--bubble-bot);border:1px solid var(--border);border-bottom-left-radius:4px;}
     .bubble-time{font-size:11px;color:var(--text-muted);margin-top:4px;}
-    .bubble table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;}
-    .bubble th{background:rgba(79,142,247,.15);color:var(--accent);font-weight:600;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);}
-    .bubble td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04);}
+    .bubble table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .bubble th{background:rgba(79,142,247,.15);color:var(--accent);font-weight:600;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+    .bubble td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;}
     .bubble tr:last-child td{border-bottom:none;}
     .bubble tr:hover td{background:rgba(255,255,255,.03);}
     .typing{display:flex;align-items:center;gap:4px;padding:14px 16px;}
@@ -170,7 +170,40 @@
     .hint-clickable:hover{background:rgba(187,213,49,0.14);border-color:rgba(187,213,49,0.45);transform:translateY(-1px);box-shadow:0 3px 10px rgba(187,213,49,0.12);}
     .hint-clickable:active{transform:translateY(0);}
     .hint-clickable .hint-icon{font-style:normal;font-size:14px;}
-    @media(max-width:640px){.sidebar{display:none;}.messages-area{padding:16px;}.input-area{padding:12px 16px 16px;}.modal-box{width:98vw;height:96vh;border-radius:14px;}}
+    .scroll-btn{position:fixed;bottom:80px;right:16px;width:44px;height:44px;border-radius:50%;background:var(--accent);color:#0d0f14;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;z-index:50;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;box-shadow:0 2px 12px rgba(0,0,0,.4);}
+    .scroll-btn.visible{opacity:1;transform:translateY(0);}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;}
+    .sidebar-overlay.open{display:block;}
+    .hamburger-btn{display:none;background:none;border:none;cursor:pointer;color:var(--text-main);font-size:22px;padding:6px 8px;border-radius:8px;line-height:1;flex-shrink:0;}
+    .hamburger-btn:hover{background:var(--bg-card);}
+    .swipe-hint{display:none;}
+    @media(max-width:640px){
+      .sidebar{display:none;position:fixed;top:0;left:0;bottom:0;width:280px;z-index:200;transform:translateX(-280px);transition:transform .25s;}
+      .sidebar.mobile-open{display:flex !important;transform:translateX(0);}
+      .sidebar-overlay.open{display:block;}
+      .hamburger-btn{display:flex;}
+      .swipe-hint{display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;color:#6b7280;padding:2px 0 4px;font-style:italic;}
+      .messages-area{padding:10px 8px;}
+      .input-area{padding:10px 12px 14px;}
+      .modal-box{width:98vw;height:96vh;border-radius:14px;}
+      .bubble{max-width:94%;padding:10px 12px;}
+      .bubble table{font-size:11px;}
+      .bubble th{padding:5px 8px;}
+      .bubble td{padding:5px 8px;}
+      .bubble td code{font-size:10px;padding:1px 4px;}
+      .chat-header{padding:12px 16px;}
+      .msg-row{gap:8px;}
+      .action-btns{flex-direction:column;gap:6px;}
+      .csv-btn,.informe-btn{width:100%;justify-content:center;}
+      .bubble table.device-table{display:block;overflow-x:visible;}
+      .bubble table.device-table thead{display:none;}
+      .bubble table.device-table tbody{display:block;}
+      .bubble table.device-table tr{display:block;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:10px 12px;}
+      .bubble table.device-table td{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border:none;font-size:12px;white-space:normal;gap:8px;}
+      .bubble table.device-table td::before{content:attr(data-label);font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;letter-spacing:.4px;flex-shrink:0;padding-top:2px;min-width:72px;}
+      .bubble table.device-table td:first-child{display:none;}
+      .bubble table.device-table td code{white-space:normal;word-break:break-all;font-size:12px;}
+    }
   </style>
 </head>
 <body>
@@ -629,9 +662,9 @@ function generarInformeDispositivo(datos, htmlFuente, analisis) {
   // ── Tabla GPS ──
   var tablaGPS=puntosGPS.length>0
     ?'<table class="data-table" style="margin-top:0;"><thead><tr><th>#</th><th>Fecha y hora</th><th>Latitud</th><th>Longitud</th></tr></thead><tbody>'
-      +puntosGPS.map(function(p,i){return '<tr style="'+(i===0?'background:#f0fdf4;':'')+'">'
+      +puntosGPS.map(function(p,i){var esUlt=i===0,esPri=i===puntosGPS.length-1&&puntosGPS.length>1;return '<tr style="'+(esUlt?'background:#f0fdf4;':esPri?'background:#fff7ed;':'')+'">'
         +'<td><b>'+(p.num||i+1)+'</b></td>'
-        +'<td>'+(p.fecha||'N/D')+(i===0?' <span style="font-size:10px;color:#22c55e;font-weight:700;">● último</span>':'')+'</td>'
+        +'<td>'+(p.fecha||'N/D')+(esUlt?' <span style="font-size:10px;color:#22c55e;font-weight:700;">● último</span>':esPri?' <span style="font-size:10px;color:#f97316;font-weight:700;">● primero</span>':'')+'</td>'
         +'<td>'+(typeof p.lat==='number'?p.lat.toFixed(6):p.lat)+'</td>'
         +'<td>'+(typeof p.lng==='number'?p.lng.toFixed(6):p.lng)+'</td>'
         +'</tr>';}).join('')
@@ -648,10 +681,12 @@ function generarInformeDispositivo(datos, htmlFuente, analisis) {
       +'var puntos='+puntosJson+';'
       +'var map=L.map("mapa-informe").setView([puntos[0].lat,puntos[0].lng],15);'
       +'L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",{attribution:"© Google Maps",maxZoom:20}).addTo(map);'
-      +'if(puntos.length>1){var ll=puntos.map(function(p){return[p.lat,p.lng];});L.polyline(ll,{color:"#bbd531",weight:2,opacity:.6,dashArray:"5,5"}).addTo(map);L.polyline(ll,{color:"#ef4444",weight:3,opacity:.8,dashArray:"6,4"}).addTo(map);map.fitBounds(L.latLngBounds(ll),{padding:[30,30]});}'
-      +'var iU=L.divIcon({className:"",html:"<div style=\\"background:#bbd531;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(187,213,49,.8);\\"></div>",iconSize:[14,14],iconAnchor:[7,7]});'
-      +'var iN=L.divIcon({className:"",html:"<div style=\\"background:#4f8ef7;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:.8;\\"></div>",iconSize:[9,9],iconAnchor:[4,4]});'
-      +'puntos.forEach(function(p,i){var m=L.marker([p.lat,p.lng],{icon:i===0?iU:iN}).addTo(map);m.bindPopup("<b>"+(i===0?"🟢 Último punto":"Punto "+p.num)+"</b><br>📅 "+p.fecha+"<br>📍 "+p.lat.toFixed(6)+", "+p.lng.toFixed(6)+"<br><a href=\\"https://www.google.com/maps?q="+p.lat+","+p.lng+"\\" target=\\"_blank\\" style=\\"color:#4285F4;\\">Ver en Google Maps</a>");if(i===0)m.openPopup();});'
+      +'if(puntos.length>1){var ll=puntos.map(function(p){return[p.lat,p.lng];});L.polyline(ll,{color:"#8b5cf6",weight:3,opacity:.85}).addTo(map);map.fitBounds(L.latLngBounds(ll),{padding:[30,30]});}'
+      +'var iU=L.divIcon({className:"",html:"<div style=\\"background:#fb7185;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(251,113,133,.8);\\"></div>",iconSize:[14,14],iconAnchor:[7,7]});'
+      +'var iP=L.divIcon({className:"",html:"<div style=\\"background:#22d3ee;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(34,211,238,.8);\\"></div>",iconSize:[12,12],iconAnchor:[6,6]});'
+      +'var iN=L.divIcon({className:"",html:"<div style=\\"background:#a78bfa;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:.8;\\"></div>",iconSize:[9,9],iconAnchor:[4,4]});'
+      +'var nP=puntos.length;'
+      +'puntos.forEach(function(p,i){var esU=i===0,esP=i===nP-1&&nP>1,icon=esU?iU:esP?iP:iN;var m=L.marker([p.lat,p.lng],{icon:icon}).addTo(map);m.bindPopup("<b>"+(esU?"<span style=\'color:#fb7185;font-size:14px;\'>●</span> Último punto":esP?"<span style=\'color:#22d3ee;font-size:14px;\'>●</span> Primer punto":"<span style=\'color:#a78bfa;font-size:12px;\'>●</span> Punto "+p.num)+"</b><br>📅 "+p.fecha+"<br>📍 "+p.lat.toFixed(6)+", "+p.lng.toFixed(6)+"<br><a href=\\"https://www.google.com/maps?q="+p.lat+","+p.lng+"\\" target=\\"_blank\\" style=\\"color:#4285F4;\\">Ver en Google Maps</a>");if(esU)m.openPopup();});'
       +'});<\/script>';
   }
 
@@ -861,6 +896,24 @@ function MessageBubble({ msg, onSendMessage }) {
   var muestraInforme = tipoInforme !== "ninguno";
   var nombreCSV      = "SOTI_"+new Date().toISOString().slice(0,10)+".csv";
   var [showInforme, setShowInforme] = useState(false);
+  var htmlRef = useRef(null);
+
+  useEffect(function(){
+    if(!htmlRef.current) return;
+    // Swipe indicator en tablas normales (no device-table)
+    htmlRef.current.querySelectorAll('table:not(.device-table)').forEach(function(t){
+      if(t.parentNode.querySelector('.swipe-hint')) return;
+      var hint=document.createElement('div');
+      hint.className='swipe-hint';
+      hint.textContent='← desliza →';
+      t.parentNode.insertBefore(hint, t.nextSibling);
+    });
+    // Indicador visual en códigos copiables
+    htmlRef.current.querySelectorAll('code').forEach(function(c){
+      c.style.cursor='pointer';
+      c.setAttribute('title','Toca para copiar');
+    });
+  },[msg.html]);
 
   return (
     <>
@@ -868,8 +921,24 @@ function MessageBubble({ msg, onSendMessage }) {
         <div className={"msg-avatar"+(isUser?" user-av":" bot-av")}>{isUser?USER_AVATAR:BOT_AVATAR}</div>
         <div className={"bubble"+(isUser?" user-bubble":" bot-bubble")}>
           {msg.html && <div
+            ref={htmlRef}
             dangerouslySetInnerHTML={{__html:msg.html}}
             onClick={function(e){
+              // Copiar serial al tocar código
+              var codeEl=e.target.closest('code');
+              if(codeEl){
+                var txt=codeEl.textContent;
+                if(navigator.clipboard){
+                  navigator.clipboard.writeText(txt).then(function(){
+                    var prev=codeEl.style.background;
+                    codeEl.style.background='rgba(34,197,94,.4)';
+                    codeEl.style.transition='background .4s';
+                    setTimeout(function(){codeEl.style.background=prev;codeEl.style.transition='';},1000);
+                  });
+                }
+                return;
+              }
+              // Hints clickables
               var el=e.target.closest('.hint-clickable');
               if(el&&onSendMessage){var query=el.dataset.query,mode=el.dataset.mode||undefined;if(query)onSendMessage(query,mode);}
             }}
@@ -953,10 +1022,12 @@ function MapMessage({ lat, lng, name, history }) {
     var puntos=history&&history.length>0?history:[{lat:lat,lng:lng,fecha:"",num:1}];
     var map=L.map(containerRef.current,{zoomControl:true}).setView([puntos[0].lat,puntos[0].lng],15);
     L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",{attribution:"© Google Maps",maxZoom:20}).addTo(map);
-    if(puntos.length>1){var ll=puntos.map(function(p){return[p.lat,p.lng];});L.polyline(ll,{color:"#bbd531",weight:2,opacity:.6,dashArray:"5,5"}).addTo(map);L.polyline(ll,{color:"#ef4444",weight:3,opacity:.8,dashArray:"6,4"}).addTo(map);}
-    var iU=L.divIcon({className:"",html:'<div style="background:#bbd531;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(187,213,49,.8);"></div>',iconSize:[14,14],iconAnchor:[7,7]});
-    var iN=L.divIcon({className:"",html:'<div style="background:#4f8ef7;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:.8;"></div>',iconSize:[9,9],iconAnchor:[4,4]});
-    puntos.forEach(function(p,idx){var esU=idx===0;var m=L.marker([p.lat,p.lng],{icon:esU?iU:iN}).addTo(map);m.bindPopup("<b>"+(esU?"🟢 Último punto":"Punto "+p.num)+"</b><br>📅 "+p.fecha+"<br>📍 "+p.lat.toFixed(6)+", "+p.lng.toFixed(6)+"<br><a href='https://www.google.com/maps?q="+p.lat+","+p.lng+"' target='_blank' style='color:#4285F4;'>Ver en Google Maps</a>");if(esU)m.openPopup();});
+    if(puntos.length>1){var ll=puntos.map(function(p){return[p.lat,p.lng];});L.polyline(ll,{color:"#8b5cf6",weight:3,opacity:.85}).addTo(map);}
+    var iU=L.divIcon({className:"",html:'<div style="background:#fb7185;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(251,113,133,.8);"></div>',iconSize:[14,14],iconAnchor:[7,7]});
+    var iP=L.divIcon({className:"",html:'<div style="background:#22d3ee;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 6px rgba(34,211,238,.8);"></div>',iconSize:[12,12],iconAnchor:[6,6]});
+    var iN=L.divIcon({className:"",html:'<div style="background:#a78bfa;width:9px;height:9px;border-radius:50%;border:1px solid #fff;opacity:.8;"></div>',iconSize:[9,9],iconAnchor:[4,4]});
+    var nP=puntos.length;
+    puntos.forEach(function(p,idx){var esU=idx===0;var esP=idx===nP-1&&nP>1;var icon=esU?iU:esP?iP:iN;var m=L.marker([p.lat,p.lng],{icon:icon}).addTo(map);m.bindPopup("<b>"+(esU?"<span style='color:#fb7185;font-size:14px;'>●</span> Último punto":esP?"<span style='color:#22d3ee;font-size:14px;'>●</span> Primer punto":"<span style='color:#a78bfa;font-size:12px;'>●</span> Punto "+p.num)+"</b><br>📅 "+p.fecha+"<br>📍 "+p.lat.toFixed(6)+", "+p.lng.toFixed(6)+"<br><a href='https://www.google.com/maps?q="+p.lat+","+p.lng+"' target='_blank' style='color:#4285F4;'>Ver en Google Maps</a>");if(esU)m.openPopup();});
     if(puntos.length>1){var b=L.latLngBounds(puntos.map(function(p){return[p.lat,p.lng];}));map.fitBounds(b,{padding:[30,30]});}
     mapRef.current=map;
     return function(){if(mapRef.current){mapRef.current.remove();mapRef.current=null;}};
@@ -964,6 +1035,12 @@ function MapMessage({ lat, lng, name, history }) {
   return (
     <div>
       <div ref={containerRef} className="map-container" style={{height:"300px"}}/>
+      <div style={{display:"flex",gap:"14px",marginTop:"8px",flexWrap:"wrap",fontSize:"11px",color:"var(--text-muted)"}}>
+        <span style={{display:"flex",alignItems:"center",gap:"5px"}}><span style={{width:"16px",height:"3px",borderRadius:"2px",background:"#8b5cf6",display:"inline-block",flexShrink:0}}/> Ruta</span>
+        <span style={{display:"flex",alignItems:"center",gap:"5px"}}><span style={{width:"12px",height:"12px",borderRadius:"50%",background:"#fb7185",display:"inline-block",border:"1px solid #fff",flexShrink:0}}/> Último punto</span>
+        <span style={{display:"flex",alignItems:"center",gap:"5px"}}><span style={{width:"10px",height:"10px",borderRadius:"50%",background:"#22d3ee",display:"inline-block",border:"1px solid #fff",flexShrink:0}}/> Primer punto</span>
+        <span style={{display:"flex",alignItems:"center",gap:"5px"}}><span style={{width:"8px",height:"8px",borderRadius:"50%",background:"#a78bfa",display:"inline-block",border:"1px solid #fff",flexShrink:0}}/> Intermedios</span>
+      </div>
       <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer"
         style={{display:"inline-block",marginTop:"8px",padding:"6px 14px",background:"#4285F4",color:"#fff",borderRadius:"6px",textDecoration:"none",fontSize:"12px"}}>
         🗺️ Abrir último punto en Google Maps
@@ -1137,10 +1214,16 @@ function App() {
   var [input,setInput]             = useState("");
   var [loading,setLoading]         = useState(false);
   var [activeMode,setActiveMode]   = useState("free");
-  var bottomRef=useRef(null), textareaRef=useRef(null);
+  var [showSidebar,setShowSidebar] = useState(false);
+  var [showScrollBtn,setShowScrollBtn] = useState(false);
+  var bottomRef=useRef(null), textareaRef=useRef(null), messagesAreaRef=useRef(null);
   var activeChatIdRef=useRef(null), activeModeRef=useRef("free");
 
   var handleLogout=function(){clearSession();CLIENTE_CONFIG=null;window.location.reload();};
+  var handleMessagesScroll=function(e){
+    var el=e.currentTarget;
+    setShowScrollBtn(el.scrollHeight-el.scrollTop-el.clientHeight>80);
+  };
 
   if(!currentUser) return <LoginScreen onLogin={function(){}}/>;
 
@@ -1151,8 +1234,8 @@ function App() {
   useEffect(function(){saveSessions(sessions);},[sessions]);
   useEffect(function(){if(bottomRef.current)bottomRef.current.scrollIntoView({behavior:"smooth"});},[messages,loading]);
 
-  var startNewChat=function(){setMessages([]);setActiveChatId(null);};
-  var loadChat=function(s){setMessages(s.messages.map(function(m){return Object.assign({},m,{time:new Date(m.time)});}));setActiveChatId(s.id);};
+  var startNewChat=function(){setMessages([]);setActiveChatId(null);setShowSidebar(false);};
+  var loadChat=function(s){setMessages(s.messages.map(function(m){return Object.assign({},m,{time:new Date(m.time)});}));setActiveChatId(s.id);setShowSidebar(false);};
   var deleteChat=function(e,id){e.stopPropagation();setSessions(function(p){return p.filter(function(s){return s.id!==id;});});if(activeChatIdRef.current===id){setMessages([]);setActiveChatId(null);}};
 
   var sendMessage=useCallback(async function(text,modeOverride){
@@ -1217,7 +1300,8 @@ function App() {
 
   return (
     <div className="app">
-      <aside className="sidebar">
+      {showSidebar && <div className="sidebar-overlay open" onClick={function(){setShowSidebar(false);}}/>}
+      <aside className={"sidebar"+(showSidebar?" mobile-open":"")}>
         <div className="sidebar-logo"><img src="https://b2kmnbrlfbl9jvgp.public.blob.vercel-storage.com/sofIAlogo.jpg" alt="sofIA" className="logo-img"/></div>
         <button className="new-chat-btn" onClick={startNewChat}><span>&#xFF0B;</span> Nueva consulta</button>
         <div><p className="sidebar-section-title">Recientes</p></div>
@@ -1245,10 +1329,13 @@ function App() {
       </aside>
       <main className="chat-main">
         <header className="chat-header">
-          <div><div className="chat-header-title">Asistente SOTI</div><div className="chat-header-sub">Consultas en lenguaje natural</div></div>
+          <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+            <button className="hamburger-btn" onClick={function(){setShowSidebar(true);}} title="Historial de conversaciones">☰</button>
+            <div><div className="chat-header-title">Asistente SOTI</div><div className="chat-header-sub">Consultas en lenguaje natural</div></div>
+          </div>
           <div className="status-badge"><span className="status-dot"/> Conectado</div>
         </header>
-        <div className="messages-area">
+        <div className="messages-area" ref={messagesAreaRef} onScroll={handleMessagesScroll}>
           {isEmpty?(
             <div className="welcome">
               <div className="welcome-icon"><img src={logoCliente} alt={nombreCliente} style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:"20px"}}/></div>
@@ -1283,6 +1370,9 @@ function App() {
           </div>
           <p className="input-hint">SofIA puede cometer errores. Verifica información crítica.</p>
         </div>
+        <button className={"scroll-btn"+(showScrollBtn?" visible":"")}
+          onClick={function(){if(bottomRef.current)bottomRef.current.scrollIntoView({behavior:"smooth"});}}
+          title="Ir al último mensaje">↓</button>
       </main>
     </div>
   );
